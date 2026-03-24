@@ -1,0 +1,312 @@
+using Npgsql;
+using NpgsqlTypes;
+using System.Data;
+using TraceabilityDriver.Models.Mapping;
+
+namespace TraceabilityDriver.Services.Connectors;
+
+public class TDPostGreSQLConnector : ITDConnector
+{
+    private readonly ILogger<TDPostGreSQLConnector> _logger;
+    private readonly ISynchronizationContext _syncContext;
+    private readonly IEventsTableMappingService _eventsTableMappingService;
+
+    public TDPostGreSQLConnector(
+        ILogger<TDPostGreSQLConnector> logger,
+        IEventsTableMappingService eventsTableMappingService,
+        ISynchronizationContext syncContext)
+    {
+        _logger = logger;
+        _eventsTableMappingService = eventsTableMappingService;
+        _syncContext = syncContext;
+    }
+
+    /// <summary>
+    /// Tests the connection to the database.
+    /// </summary>
+    public async Task<bool> TestConnectionAsync(TDConnectorConfiguration config)
+    {
+        try
+        {
+            using (var connection = new NpgsqlConnection(config.ConnectionString))
+            {
+                await connection.OpenAsync();
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error testing the connection to the database: {config.Database}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the total number of rows from a database asynchronously.
+    /// </summary>
+    /// <param name="config">Contains the configuration settings for connecting to the database.</param>
+    /// <param name="selector">Specifies the query to count the rows in the database.</param>
+    /// <returns>Returns the total number of rows as an integer.</returns>
+    /// <exception cref="Exception">Thrown when there is an error while accessing the database.</exception>
+    public async Task<int> GetTotalRowsAsync(TDConnectorConfiguration config, TDMappingSelector selector)
+    {
+        try
+        {
+            using (var connection = new NpgsqlConnection(config.ConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (NpgsqlCommand cmd = new NpgsqlCommand(selector.Count, connection))
+                {
+                    // Add a memory variable.
+                    foreach (var memory in selector.Memory)
+                    {
+                        AddMemoryVariable(cmd, memory.Key, memory.Value);
+                    }
+
+                    return Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error getting total rows from the database: {config.Database}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Returns one or more events from the database using the selector.
+    /// </summary>
+    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Check for cancellation.
+            if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+            // Get the total number of rows.
+            int totalRows = await GetTotalRowsAsync(config, selector);
+            totalRows = Math.Min(totalRows, 10000);
+
+            // Update the sync history.
+            _syncContext.CurrentSync.TotalItems = totalRows;
+            _syncContext.CurrentSync.ItemsProcessed = 0;
+            _syncContext.Updated();
+
+            using (var connection = new NpgsqlConnection(config.ConnectionString))
+            {
+                await connection.OpenAsync();
+
+                // Check for cancellation.
+                if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+                using (NpgsqlDataAdapter adapter = new NpgsqlDataAdapter())
+                {
+                    adapter.SelectCommand = new NpgsqlCommand(selector.Selector, connection);
+                    adapter.SelectCommand.Parameters.Add("@offset", NpgsqlDbType.Integer).Value = 0;
+                    adapter.SelectCommand.Parameters.Add("@limit", NpgsqlDbType.Integer).Value = 1000;
+
+                    // Add a memory variable.
+                    foreach (var memory in selector.Memory)
+                    {
+                        AddMemoryVariable(adapter.SelectCommand, memory.Key, memory.Value);
+                    }
+
+                    // Check for cancellation.
+                    if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+                    // Create a list to store the events.
+                    List<CommonEvent> events = new List<CommonEvent>();
+
+                    // If there are no rows, set memory variables to the previous sync values and return early.
+                    if (totalRows < 1)
+                    {
+                        PreservePreviousSyncMemoryVariables(selector);
+                        return events;
+                    }
+
+                    // We are going to page the data in chunks of 1000.
+                    for (int start = 0; start < totalRows && start < 10000; start += 1000)
+                    {
+                        // Check for cancellation.
+                        if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+                        // Set the offset.
+                        adapter.SelectCommand.Parameters["@offset"].Value = start;
+
+                        // Get the data table.
+                        DataTable dataTable = await FillWithRetryAsync(adapter, cancellationToken);
+
+                        // Check for cancellation.
+                        if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+                        // Map the events.
+                        List<CommonEvent> results = _eventsTableMappingService.MapEvents(selector.EventMapping, dataTable, cancellationToken);
+                        events.AddRange(results);
+
+                        // Handle the memory variables.
+                        foreach (var memory in selector.Memory)
+                        {
+                            HandleMemoryVariables(dataTable, memory.Key, memory.Value);
+                        }
+
+                        // Update the sync.
+                        _syncContext.CurrentSync.ItemsProcessed += results.Count;
+                        _syncContext.Updated();
+                    }
+
+                    return events;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error getting events from the database: {config.Database}", ex);
+        }
+    }
+
+    /// <summary>
+    /// This is a method that will help to remember things about the current sync so that we can 
+    /// use them in the next sync.
+    /// </summary>
+    public void HandleMemoryVariables(DataTable dt, string key, TDMappingSelectorMemoryVariable memory)
+    {
+        string column = memory.Field.Substring(1) ?? string.Empty;
+        if (!dt.Columns.Contains(column))
+        {
+            throw new Exception($"The column {column} does not exist in the data table. Failed to process the memory variable {key}.");
+        }
+
+        List<object> values = new List<object>();
+        foreach (DataRow row in dt.Rows)
+        {
+            values.Add(row[column]);
+        }
+
+        _syncContext.CurrentSync.Memory[key] = values.LastOrDefault()?.ToString() ?? memory.DefaultValue;
+    }
+
+    /// <summary>
+    /// Sets the current sync memory variables to the previous sync memory variables.
+    /// </summary>
+    public void PreservePreviousSyncMemoryVariables(TDMappingSelector selector)
+    {
+        if (_syncContext.PreviousSync == null) return;
+
+        foreach (var memory in selector.Memory)
+        {
+            if (_syncContext.PreviousSync.Memory.ContainsKey(memory.Key))
+            {
+                _syncContext.CurrentSync.Memory[memory.Key] = _syncContext.PreviousSync.Memory[memory.Key];
+            }
+        }
+    }
+
+    public void AddMemoryVariable(NpgsqlCommand selectCommand, string key, TDMappingSelectorMemoryVariable memory)
+    {
+        try
+        {
+            string value = memory.DefaultValue;
+
+            // If the previous sync has a value for the memory variable, then use that.
+            if (_syncContext.PreviousSync?.Memory.ContainsKey(key) == true)
+            {
+                value = _syncContext.PreviousSync.Memory[key];
+            }
+
+            // Do a switch on the data type and parse the value.
+            switch (memory.DataType.ToLower())
+            {
+                case "string": selectCommand.Parameters.Add($"@{key}", NpgsqlDbType.Varchar).Value = value; break;
+                case "int32": selectCommand.Parameters.Add($"@{key}", NpgsqlDbType.Integer).Value = int.Parse(value); break;
+                case "int64": selectCommand.Parameters.Add($"@{key}", NpgsqlDbType.Bigint).Value = long.Parse(value); break;
+                case "double": selectCommand.Parameters.Add($"@{key}", NpgsqlDbType.Double).Value = double.Parse(value); break;
+                case "datetime": selectCommand.Parameters.Add($"@{key}", NpgsqlDbType.Timestamp).Value = DateTime.Parse(value); break;
+                case "bool": selectCommand.Parameters.Add($"@{key}", NpgsqlDbType.Boolean).Value = bool.Parse(value); break;
+                default: throw new Exception($"Unknown data type on memory variable: {memory.DataType}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding memory variable: {Key}", key);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Fills a DataTable with data from a database, implementing retry logic for transient errors.
+    /// </summary>
+    /// <param name="adapter">Used to execute the fill operation on the DataTable.</param>
+    /// <param name="cancellationToken">Allows the operation to be cancelled if requested.</param>
+    /// <returns>Returns the filled DataTable after successful retrieval.</returns>
+    private async Task<DataTable> FillWithRetryAsync(NpgsqlDataAdapter adapter, CancellationToken cancellationToken)
+    {
+        DataTable dataTable = new DataTable();
+
+        // Add retry logic for Fill operation with exponential backoff
+        int maxRetries = 3;
+        int retryCount = 0;
+        int delayMilliseconds = 1000; // Start with 1 second delay
+
+        while (true)
+        {
+            try
+            {
+                adapter.Fill(dataTable);
+                break; // Success, exit the retry loop
+            }
+            catch (NpgsqlException ex) when (IsTransientError(ex) && retryCount < maxRetries)
+            {
+                retryCount++;
+
+                if (retryCount >= maxRetries)
+                {
+                    _logger.LogError(ex, "Failed to fill data table after {RetryCount} attempts", retryCount);
+                    throw; // Re-throw after max retries
+                }
+
+                _logger.LogWarning("Database operation failed, retrying ({RetryCount}/{MaxRetries}) after {Delay}ms. Error: {ErrorMessage}",
+                    retryCount, maxRetries, delayMilliseconds, ex.Message);
+
+                // Check cancellation before waiting
+                if (cancellationToken.IsCancellationRequested) return new DataTable();
+
+                // Wait with exponential backoff
+                await Task.Delay(delayMilliseconds, cancellationToken);
+                delayMilliseconds *= 2; // Exponential backoff
+            }
+        }
+
+        return dataTable;
+    }
+
+    /// <summary>
+    /// Determines if a PostgreSQL exception is a transient error that can be retried.
+    /// </summary>
+    private static bool IsTransientError(NpgsqlException ex)
+    {
+        // PostgreSQL error codes for transient failures
+        // 08000: connection_exception
+        // 08003: connection_does_not_exist
+        // 08006: connection_failure
+        // 57P01: admin_shutdown
+        // 57P02: crash_shutdown
+        // 57P03: cannot_connect_now
+        // 40001: serialization_failure
+        // 40P01: deadlock_detected
+        string[] transientSqlStates = { "08000", "08003", "08006", "57P01", "57P02", "57P03", "40001", "40P01" };
+
+        if (ex.SqlState != null && transientSqlStates.Contains(ex.SqlState))
+        {
+            return true;
+        }
+
+        // Also check for timeout messages
+        if (ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+}
