@@ -11,6 +11,9 @@ using TraceabilityDriver.Models.Sql;
 
 namespace TraceabilityDriver.Services
 {
+    /// <summary>
+    /// MS SQL Server implementation of the IDatabaseService interface, responsible for storing and querying traceability data in a SQL Server GDST data cache.
+    /// </summary>
     public class SqlServerService : IDatabaseService
     {
         private readonly ILogger<SqlServerService> _logger;

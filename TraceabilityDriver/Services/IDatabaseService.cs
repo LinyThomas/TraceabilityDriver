@@ -5,6 +5,9 @@ using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services
 {
+    /// <summary>
+    /// Interface for the GDST data cache, where the transformed traceability data is stored.
+    /// </summary>
     public interface IDatabaseService
     {
         Task<DatabaseReport> GetDatabaseReport();

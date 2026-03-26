@@ -12,7 +12,7 @@ using TraceabilityDriver.Models.MongoDB;
 namespace TraceabilityDriver.Services
 {
     /// <summary>
-    /// Service for storing and querying EPCIS events and master data in a MongoDB database.
+    /// Mongo implementation of the IDatabaseService for storing transformed traceability data in a Mongo GDST data cache.
     /// </summary>
     public class MongoDBService : IDatabaseService
     {
