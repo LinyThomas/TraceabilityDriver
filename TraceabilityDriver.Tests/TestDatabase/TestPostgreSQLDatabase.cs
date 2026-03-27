@@ -13,50 +13,69 @@ namespace TraceabilityDriver.Tests.TestDatabase
 
         public void SetupDatabase()
         {
+            // Clear all pooled Npgsql connections before touching the database to
+            // prevent 57P01 "terminating connection" error caused by attempting to use
+            // a pooled connection that has been killed on the server.
+            NpgsqlConnection.ClearAllPools();
+
             string serverConnectionString = _config.ConnectionString
                 .Replace($"Database={_config.DatabaseName}", "Database=postgres");
 
-            using (var connection = new NpgsqlConnection(serverConnectionString))
+            const int maxAttempts = 3;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                connection.Open();
-
-                using (var cmd = connection.CreateCommand())
+                try
                 {
-                    cmd.CommandText = $@"
-                        SELECT pg_terminate_backend(pg_stat_activity.pid)
-                        FROM pg_stat_activity
-                        WHERE pg_stat_activity.datname = '{_config.DatabaseName}'
-                        AND pid <> pg_backend_pid();";
-                    cmd.ExecuteNonQuery();
+                    using (var connection = new NpgsqlConnection(serverConnectionString))
+                    {
+                        connection.Open();
+
+                        using (var cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = $@"
+                                SELECT pg_terminate_backend(pg_stat_activity.pid)
+                                FROM pg_stat_activity
+                                WHERE pg_stat_activity.datname = '{_config.DatabaseName}'
+                                AND pid <> pg_backend_pid();";
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        using (var cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = $"DROP DATABASE IF EXISTS \"{_config.DatabaseName}\";";
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        using (var cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = $"CREATE DATABASE \"{_config.DatabaseName}\";";
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    using (var connection = new NpgsqlConnection(_config.ConnectionString))
+                    {
+                        connection.Open();
+
+                        using (var cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = GetBuildSql();
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        using (var cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = GetSeedSql();
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    return;
                 }
-
-                using (var cmd = connection.CreateCommand())
+                catch (NpgsqlException) when (attempt < maxAttempts)
                 {
-                    cmd.CommandText = $"DROP DATABASE IF EXISTS \"{_config.DatabaseName}\";";
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (var cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = $"CREATE DATABASE \"{_config.DatabaseName}\";";
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            using (var connection = new NpgsqlConnection(_config.ConnectionString))
-            {
-                connection.Open();
-
-                using (var cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = GetBuildSql();
-                    cmd.ExecuteNonQuery();
-                }
-
-                using (var cmd = connection.CreateCommand())
-                {
-                    cmd.CommandText = GetSeedSql();
-                    cmd.ExecuteNonQuery();
+                    Thread.Sleep(500 * attempt);
+                    NpgsqlConnection.ClearAllPools();
                 }
             }
         }
