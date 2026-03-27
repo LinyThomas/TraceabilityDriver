@@ -265,6 +265,52 @@ BEGIN TRY
       (@BatchId, @Lot_CodFlt, 450.000, 'KGM');
 
     /* ------------------------------------
+       9b) Farm Harvest batch
+       ------------------------------------ */
+    INSERT INTO src.ProcessingBatch (
+        BatchNumber, FacilityLocationId, EventTimeUtc, ProcessingTypeCode,
+        InformationProviderPartyId, ProductOwnerPartyId,
+        CocCertId, HumanPolicyCertId
+    )
+    VALUES
+      ('PB-2026-FH-0001', @Loc_Plant, '2026-01-04T08:30:00', 'FARM_HARVEST',
+       @Party_PLANT01, @Party_PLANT01,
+       @Cert_CoC, @Cert_Human);
+
+    DECLARE @FHBatchId bigint = (SELECT ProcessingBatchId FROM src.ProcessingBatch WHERE BatchNumber='PB-2026-FH-0001');
+
+    INSERT INTO src.ProcessingInput (ProcessingBatchId, LotId, Quantity, Uom)
+    VALUES
+      (@FHBatchId, @Lot_CodRaw, 120.000, 'KGM');
+
+    INSERT INTO src.ProcessingOutput (ProcessingBatchId, LotId, Quantity, Uom)
+    VALUES
+      (@FHBatchId, @Lot_CodFlt, 100.000, 'KGM');
+
+    /* ------------------------------------
+       9c) Feedmill Transformation batch
+       ------------------------------------ */
+    INSERT INTO src.ProcessingBatch (
+        BatchNumber, FacilityLocationId, EventTimeUtc, ProcessingTypeCode,
+        InformationProviderPartyId, ProductOwnerPartyId,
+        CocCertId, HumanPolicyCertId
+    )
+    VALUES
+      ('PB-2026-FMT-0001', @Loc_Plant, '2026-01-04T09:30:00', 'FEEDMILL_TRANSFORMATION',
+       @Party_PLANT01, @Party_PLANT01,
+       @Cert_CoC, @Cert_Human);
+
+    DECLARE @FMTBatchId bigint = (SELECT ProcessingBatchId FROM src.ProcessingBatch WHERE BatchNumber='PB-2026-FMT-0001');
+
+    INSERT INTO src.ProcessingInput (ProcessingBatchId, LotId, Quantity, Uom)
+    VALUES
+      (@FMTBatchId, @Lot_CodRaw, 120.000, 'KGM');
+
+    INSERT INTO src.ProcessingOutput (ProcessingBatchId, LotId, Quantity, Uom)
+    VALUES
+      (@FMTBatchId, @Lot_CodFlt, 100.000, 'KGM');
+
+    /* ------------------------------------
        10) Aggregation ADD (put output lot into SSCC_1)
        + Commingling example SSCC_2 is already mixed
        ------------------------------------ */

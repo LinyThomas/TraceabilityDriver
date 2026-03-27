@@ -544,6 +544,18 @@ SET @BatchId = (SELECT ProcessingBatchId FROM ProcessingBatch WHERE BatchNumber=
 INSERT INTO ProcessingInput (ProcessingBatchId, LotId, Quantity, Uom) VALUES (@BatchId, @Lot_CodRaw, 500.000, 'KGM');
 INSERT INTO ProcessingOutput (ProcessingBatchId, LotId, Quantity, Uom) VALUES (@BatchId, @Lot_CodFlt, 450.000, 'KGM');
 
+INSERT INTO ProcessingBatch (BatchNumber, FacilityLocationId, EventTimeUtc, ProcessingTypeCode, InformationProviderPartyId, ProductOwnerPartyId, CocCertId, HumanPolicyCertId)
+VALUES ('PB-2026-FH-0001', @Loc_Plant, '2026-01-04 08:30:00', 'FARM_HARVEST', @Party_PLANT01, @Party_PLANT01, @Cert_CoC, @Cert_Human);
+SET @FHBatchId = (SELECT ProcessingBatchId FROM ProcessingBatch WHERE BatchNumber='PB-2026-FH-0001');
+INSERT INTO ProcessingInput (ProcessingBatchId, LotId, Quantity, Uom) VALUES (@FHBatchId, @Lot_CodRaw, 120.000, 'KGM');
+INSERT INTO ProcessingOutput (ProcessingBatchId, LotId, Quantity, Uom) VALUES (@FHBatchId, @Lot_CodFlt, 100.000, 'KGM');
+
+INSERT INTO ProcessingBatch (BatchNumber, FacilityLocationId, EventTimeUtc, ProcessingTypeCode, InformationProviderPartyId, ProductOwnerPartyId, CocCertId, HumanPolicyCertId)
+VALUES ('PB-2026-FMT-0001', @Loc_Plant, '2026-01-04 09:30:00', 'FEEDMILL_TRANSFORMATION', @Party_PLANT01, @Party_PLANT01, @Cert_CoC, @Cert_Human);
+SET @FMTBatchId = (SELECT ProcessingBatchId FROM ProcessingBatch WHERE BatchNumber='PB-2026-FMT-0001');
+INSERT INTO ProcessingInput (ProcessingBatchId, LotId, Quantity, Uom) VALUES (@FMTBatchId, @Lot_CodRaw, 120.000, 'KGM');
+INSERT INTO ProcessingOutput (ProcessingBatchId, LotId, Quantity, Uom) VALUES (@FMTBatchId, @Lot_CodFlt, 100.000, 'KGM');
+
 INSERT INTO AggregationEvent (EventNumber, EventType, LocationId, EventTimeUtc, InformationProviderPartyId, ProductOwnerPartyId)
 VALUES ('AGG-2026-ADD-0001', 'ADD', @Loc_Plant, '2026-01-04 10:00:00', @Party_PLANT01, @Party_PLANT01);
 SET @AggAddId = (SELECT AggregationEventId FROM AggregationEvent WHERE EventNumber='AGG-2026-ADD-0001');

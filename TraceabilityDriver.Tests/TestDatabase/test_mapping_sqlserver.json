@@ -716,18 +716,12 @@
               }
             ]
           }
-        }
-      ]
-    },
-
-    {
-      "Id": "GDST_FARM_HARVEST_OBJECT",
-      "Selectors": [
+        },
         {
-          "Id": "SEL_GDST_FARM_HARVEST_OBJECT",
+          "Id": "SEL_GDST_FARM_HARVEST_INPUTS",
           "Database": "SOURCE_DB",
-          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST_OBJECT'",
-          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST_OBJECT' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, i.Quantity AS qty, i.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingInput i ON i.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = i.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
           "Memory": {
             "LastID": {
               "DefaultValue": "0",
@@ -737,7 +731,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstfarmharvestobjectevent",
+            "EventType": "!gdstfarmharvestevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -759,7 +753,7 @@
             "Products": [
               {
                 "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
-                "ProductType": "!Reference",
+                "ProductType": "!Input",
                 "LotNumber": "$lotNumber",
                 "Quantity": "$qty",
                 "UoM": "Dictionary($uom, UomToEpcis)",
@@ -778,111 +772,13 @@
     },
 
     {
-      "Id": "GDST_HATCHING",
-      "Selectors": [
-        {
-          "Id": "SEL_GDST_HATCHING",
-          "Database": "SOURCE_DB",
-          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'HATCHING'",
-          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'HATCHING' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
-          "Memory": {
-            "LastID": {
-              "DefaultValue": "0",
-              "Field": "$idEventRecord",
-              "DataType": "Int64"
-            }
-          },
-          "EventMapping": {
-            "EventId": "$idEventRecord",
-            "EventType": "!gdsthatchingevent",
-            "EventTime": "$eventTime",
-            "InformationProvider": {
-              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName"
-            },
-            "ProductOwner": {
-              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-              "Name": "$ownerName"
-            },
-            "Location": {
-              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
-              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-              "RegistrationNumber": "$locCode",
-              "Name": "$locName",
-              "Country": "$locCountry"
-            },
-            "BroodStockSource": "!unknown",
-            "Products": [
-              {
-                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
-                "ProductType": "!Reference",
-                "LotNumber": "$lotNumber",
-                "Quantity": "$qty",
-                "UoM": "Dictionary($uom, UomToEpcis)"
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    {
-      "Id": "GDST_FEEDMILL_OBJECT",
-      "Selectors": [
-        {
-          "Id": "SEL_GDST_FEEDMILL_OBJECT",
-          "Database": "SOURCE_DB",
-          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_OBJECT'",
-          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_OBJECT' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
-          "Memory": {
-            "LastID": {
-              "DefaultValue": "0",
-              "Field": "$idEventRecord",
-              "DataType": "Int64"
-            }
-          },
-          "EventMapping": {
-            "EventId": "$idEventRecord",
-            "EventType": "!gdstfeedmillobjectevent",
-            "EventTime": "$eventTime",
-            "InformationProvider": {
-              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName"
-            },
-            "ProductOwner": {
-              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-              "Name": "$ownerName"
-            },
-            "Location": {
-              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
-              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-              "RegistrationNumber": "$locCode",
-              "Name": "$locName",
-              "Country": "$locCountry"
-            },
-            "ProteinSource": "!unknown",
-            "Products": [
-              {
-                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
-                "ProductType": "!Reference",
-                "LotNumber": "$lotNumber",
-                "Quantity": "$qty",
-                "UoM": "Dictionary($uom, UomToEpcis)"
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    {
       "Id": "GDST_FEEDMILL_TRANSFORMATION",
       "Selectors": [
         {
           "Id": "SEL_GDST_FEEDMILL_TRANSFORMATION",
           "Database": "SOURCE_DB",
           "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION'",
-          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId LEFT JOIN src.Certificate coc ON coc.CertificateId = pb.CocCertId LEFT JOIN src.Certificate hp ON hp.CertificateId = pb.HumanPolicyCertId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
           "Memory": {
             "LastID": {
               "DefaultValue": "0",
@@ -916,7 +812,64 @@
                 "ProductType": "!Output",
                 "LotNumber": "$lotNumber",
                 "Quantity": "$qty",
-                "UoM": "Dictionary($uom, UomToEpcis)"
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Id": "SEL_GDST_FEEDMILL_TRANSFORMATION_INPUTS",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, i.Quantity AS qty, i.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId LEFT JOIN src.Certificate coc ON coc.CertificateId = pb.CocCertId LEFT JOIN src.Certificate hp ON hp.CertificateId = pb.HumanPolicyCertId JOIN src.ProcessingInput i ON i.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = i.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstfeedmilltransformationevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "ProteinSource": "!unknown",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Input",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
               }
             ]
           }

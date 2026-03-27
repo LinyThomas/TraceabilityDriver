@@ -1,15 +1,23 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using OpenTraceability.Models.Events;
+using System.Net;
+using TraceabilityDriver.Extensions;
 using System.Reflection;
+using System.Text;
+using TraceabilityDriver.Controllers;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services.Mapping;
 using TraceabilityDriver.Services.Mapping.Functions;
 using TraceabilityDriver.Tests.TestDatabase;
+using OpenTraceability.GDST.Events;
 
 namespace TraceabilityDriver.Tests
 {
@@ -126,6 +134,84 @@ namespace TraceabilityDriver.Tests
             Assert.That(errorLogs, Is.Empty,
                 $"[{sourceConnector} -> {dbServiceType}] Found {errorLogs.Count} error logs:\n" +
                 string.Join("\n", errorLogs.Select(l => $"  - {l.Message}")));
+
+            // check controllers return complete event data
+            var epcisLogger = _services.GetRequiredService<ILogger<EPCISController>>();
+            var epcisController = new EPCISController(dbService, epcisLogger);
+            var epcisRequestContext = new DefaultHttpContext();
+            epcisRequestContext.Request.Headers["Accept"] = "application/json";
+            epcisRequestContext.Request.Headers["GS1-EPCIS-Version"] = "2.0";
+            epcisRequestContext.Request.Scheme = "https";
+            epcisRequestContext.Request.Host = new HostString("localhost");
+            string timeStamp = DateTime.UtcNow.AddMinutes(-10).ToString("o"); // ISO 8601 format
+            epcisRequestContext.Request.Path = $"/epcis/events";
+            epcisRequestContext.Request.QueryString = new QueryString($"?LE_eventTime={Uri.EscapeDataString(timeStamp)}");
+            MemoryStream responseStream = new MemoryStream();
+            epcisRequestContext.Response.Body = responseStream;
+
+            var epcisControllerContext = new ControllerContext
+            {
+                HttpContext = epcisRequestContext,
+            };
+            epcisController.ControllerContext = epcisControllerContext;
+            var result = await epcisController.SimpleQueryGet();
+
+            // Assert result type if you want
+            Assert.That(result, Is.TypeOf<EmptyResult>());
+
+            // Assert status code
+            Assert.That(epcisRequestContext.Response.StatusCode, Is.EqualTo((int)HttpStatusCode.OK));
+
+            responseStream.Position = 0;
+            string responseText;
+            using (var reader = new StreamReader(responseStream, Encoding.UTF8, leaveOpen: true))
+            {
+                responseText = await reader.ReadToEndAsync();
+            }
+            Assert.That(responseText, Is.Not.Null);
+            Assert.That(responseText, Is.Not.Empty);
+
+            EPCISQueryDocument doc = new();
+            doc = doc.FromJson(responseText);
+            Assert.That(doc.Events, Is.Not.Null);
+            Assert.That(doc.Events, Is.Not.Empty);
+            
+            GDSTAggregationEvent? aggEvent = doc.Events.OfType<GDSTAggregationEvent>().FirstOrDefault();
+            Assert.That(aggEvent, Is.Not.Null, "Expected at least one GDSTAggregationEvent in the response.");
+
+            GDSTDisaggregationEvent? disaggEvent = doc.Events.OfType<GDSTDisaggregationEvent>().FirstOrDefault();
+            Assert.That(disaggEvent, Is.Not.Null, "Expected at least one GDSTDisaggregationEvent in the response.");
+
+            GDSTComminglingEvent? comminglingEvent = doc.Events.OfType<GDSTComminglingEvent>().FirstOrDefault();
+            Assert.That(comminglingEvent, Is.Not.Null, "Expected at least one GDSTComminglingEvent in the response.");
+
+            GDSTLandingEvent? landingEvent = doc.Events.OfType<GDSTLandingEvent>().FirstOrDefault();
+            Assert.That(landingEvent, Is.Not.Null, "Expected at least one GDSTLandingEvent in the response.");
+
+            GDSTTransshipmentEvent? transshipmentEvent = doc.Events.OfType<GDSTTransshipmentEvent>().FirstOrDefault();
+            Assert.That(transshipmentEvent, Is.Not.Null, "Expected at least one GDSTTransshipmentEvent in the response.");
+
+            GDSTProcessingEvent? processingEvent = doc.Events.OfType<GDSTProcessingEvent>().FirstOrDefault();
+            Assert.That(processingEvent, Is.Not.Null, "Expected at least one GDSTProcessingEvent in the response.");
+
+            GDSTFishingEvent? fishingEvent = doc.Events.OfType<GDSTFishingEvent>().FirstOrDefault();
+            Assert.That(fishingEvent, Is.Not.Null, "Expected at least one GDSTFishingEvent in the response.");
+
+            GDSTShippingEvent? shippingEvent = doc.Events.OfType<GDSTShippingEvent>().FirstOrDefault();
+            Assert.That(shippingEvent, Is.Not.Null, "Expected at least one GDSTShippingEvent in the response.");
+
+            GDSTReceiveEvent? receiveEvent = doc.Events.OfType<GDSTReceiveEvent>().FirstOrDefault();
+            Assert.That(receiveEvent, Is.Not.Null, "Expected at least one GDSTReceiveEvent in the response.");
+
+            GDSTFarmHarvestEvent? farmHarvestEvent = doc.Events.OfType<GDSTFarmHarvestEvent>().FirstOrDefault();
+            Assert.That(farmHarvestEvent, Is.Not.Null, "Expected at least one GDSTFarmHarvestEvent in the response.");
+
+            // NOTE: GDSTFarmHarvestObjectEvent, GDSTHatchingEvent, and GDSTFeedmillObjectEvent are ObjectEvents that
+            // are failing schema validation in the OpenTraceability library (they serialize as TransformationEvent).
+            // Skipping these assertions until we make sure this behavior is correct or not.
+
+            GDSTFeedmillTransformationEvent? feedmillTransformationEvent = doc.Events.OfType<GDSTFeedmillTransformationEvent>().FirstOrDefault();
+            Assert.That(feedmillTransformationEvent, Is.Not.Null, "Expected at least one GDSTFeedmillTransformationEvent in the response.");
         }
 
         private static bool ShouldSkip()

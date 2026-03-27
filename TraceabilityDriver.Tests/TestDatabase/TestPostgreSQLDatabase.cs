@@ -380,6 +380,8 @@ DECLARE
     v_landingid BIGINT;
     v_tsid BIGINT;
     v_batchid BIGINT;
+    v_fhbatchid BIGINT;
+    v_fmtbatchid BIGINT;
     v_aggaddid BIGINT;
     v_aggcomid BIGINT;
     v_aggdelid BIGINT;
@@ -520,6 +522,20 @@ BEGIN
     SELECT processingbatchid INTO v_batchid FROM src.processingbatch WHERE batchnumber='PB-2026-0001';
     INSERT INTO src.processinginput (processingbatchid, lotid, quantity, uom) VALUES (v_batchid, v_lot_codraw, 500.000, 'KGM');
     INSERT INTO src.processingoutput (processingbatchid, lotid, quantity, uom) VALUES (v_batchid, v_lot_codflt, 450.000, 'KGM');
+
+    -- Farm Harvest batch
+    INSERT INTO src.processingbatch (batchnumber, facilitylocationid, eventtimeutc, processingtypecode, informationproviderpartyid, productownerpartyid, coccertid, humanpolicycertid)
+    VALUES ('PB-2026-FH-0001', v_loc_plant, '2026-01-04 08:30:00', 'FARM_HARVEST', v_party_plant01, v_party_plant01, v_cert_coc, v_cert_human);
+    SELECT processingbatchid INTO v_fhbatchid FROM src.processingbatch WHERE batchnumber='PB-2026-FH-0001';
+    INSERT INTO src.processinginput (processingbatchid, lotid, quantity, uom) VALUES (v_fhbatchid, v_lot_codraw, 120.000, 'KGM');
+    INSERT INTO src.processingoutput (processingbatchid, lotid, quantity, uom) VALUES (v_fhbatchid, v_lot_codflt, 100.000, 'KGM');
+
+    -- Feedmill Transformation batch
+    INSERT INTO src.processingbatch (batchnumber, facilitylocationid, eventtimeutc, processingtypecode, informationproviderpartyid, productownerpartyid, coccertid, humanpolicycertid)
+    VALUES ('PB-2026-FMT-0001', v_loc_plant, '2026-01-04 09:30:00', 'FEEDMILL_TRANSFORMATION', v_party_plant01, v_party_plant01, v_cert_coc, v_cert_human);
+    SELECT processingbatchid INTO v_fmtbatchid FROM src.processingbatch WHERE batchnumber='PB-2026-FMT-0001';
+    INSERT INTO src.processinginput (processingbatchid, lotid, quantity, uom) VALUES (v_fmtbatchid, v_lot_codraw, 120.000, 'KGM');
+    INSERT INTO src.processingoutput (processingbatchid, lotid, quantity, uom) VALUES (v_fmtbatchid, v_lot_codflt, 100.000, 'KGM');
 
     -- Aggregation ADD
     INSERT INTO src.aggregationevent (eventnumber, eventtype, locationid, eventtimeutc, informationproviderpartyid, productownerpartyid)
