@@ -269,7 +269,7 @@ public class CommonEvent : CommonBaseModel
         ArgumentNullException.ThrowIfNullOrWhiteSpace(this.EventId);
 
         using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventId}"));
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventType}:{this.EventId}"));
 
         return new Uri($"ni:///sha-256;{BitConverter.ToString(hash).Replace("-", "").ToLower()}?ver=CBV2.0");
     }

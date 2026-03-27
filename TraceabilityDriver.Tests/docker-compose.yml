@@ -43,8 +43,21 @@ services:
         volumes:
             - mysql_source_unit_test_data:/var/lib/mysql
 
+    postgres:
+        image: postgres:latest
+        container_name: postgres_unit_test
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: YourStrong!Passw0rd
+            POSTGRES_DB: postgres
+        ports:
+            - "5433:5432"
+        volumes:
+            - postgres_unit_test_data:/var/lib/postgresql
+
 volumes:
   mongodb_unit_test_data:
   sqlserver_unit_test_data:
   mysql_cache_unit_test_data:  
   mysql_source_unit_test_data:  
+  postgres_unit_test_data:

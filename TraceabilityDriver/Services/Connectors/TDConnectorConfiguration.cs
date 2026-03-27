@@ -8,6 +8,7 @@ public enum ConnectorType
     Unknown = 0,
     SqlServer = 1,
     MySql = 2,
+    PostGreSQL = 3,
 }
 
 /// <summary>

@@ -4,7 +4,7 @@ using TraceabilityDriver.Models.MongoDB;
 namespace TraceabilityDriver.Services.Connectors;
 
 /// <summary>
-/// The interface for the connector.
+/// The interface for querying the source database when syncing. Implementations of this interface are used to retrieve pre-tranformed traceability data based on the provided configuration and mapping selector.
 /// </summary>
 public interface ITDConnector
 {
