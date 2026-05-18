@@ -10,3 +10,6 @@
 **/mappings/**
 /TraceabilityDriver/appsettings.Development.json
 /TraceabilityDriver/BuildInstructions.md
+*.mkv
+*.mp4
+FDASubmission/
