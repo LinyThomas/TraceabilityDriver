@@ -266,25 +266,25 @@ CREATE TABLE src.processingoutput (
     uom VARCHAR(10) NOT NULL DEFAULT 'KGM'
 );
 
-CREATE TABLE src.aggregationevent (
-    aggregationeventid BIGSERIAL PRIMARY KEY,
-    eventnumber VARCHAR(60) NOT NULL UNIQUE,
-    eventtype VARCHAR(30) NOT NULL,
-    locationid BIGINT NULL REFERENCES src.location(locationid),
-    eventtimeutc TIMESTAMP NOT NULL,
-    informationproviderpartyid BIGINT NULL REFERENCES src.party(partyid),
-    productownerpartyid BIGINT NULL REFERENCES src.party(partyid)
-);
+    CREATE TABLE src.aggregationevent (
+        aggregationeventid BIGSERIAL PRIMARY KEY,
+        eventnumber VARCHAR(60) NOT NULL UNIQUE,
+        eventtype VARCHAR(30) NOT NULL,
+        locationid BIGINT NULL REFERENCES src.location(locationid),
+        eventtimeutc TIMESTAMP NOT NULL,
+        informationproviderpartyid BIGINT NULL REFERENCES src.party(partyid),
+        productownerpartyid BIGINT NULL REFERENCES src.party(partyid)
+    );
 
-CREATE TABLE src.aggregationline (
-    aggregationlineid BIGSERIAL PRIMARY KEY,
-    aggregationeventid BIGINT NOT NULL REFERENCES src.aggregationevent(aggregationeventid),
-    parentlogisticunitid BIGINT NOT NULL REFERENCES src.logisticunit(logisticunitid),
-    childlogisticunitid BIGINT NULL REFERENCES src.logisticunit(logisticunitid),
-    childlotid BIGINT NULL REFERENCES src.lot(lotid),
-    quantity DECIMAL(18,3) NULL,
-    uom VARCHAR(10) NULL
-);
+    CREATE TABLE src.aggregationline (
+        aggregationlineid BIGSERIAL PRIMARY KEY,
+        aggregationeventid BIGINT NOT NULL REFERENCES src.aggregationevent(aggregationeventid),
+        parentlogisticunitid BIGINT NOT NULL REFERENCES src.logisticunit(logisticunitid),
+        childlogisticunitid BIGINT NULL REFERENCES src.logisticunit(logisticunitid),
+        childlotid BIGINT NULL REFERENCES src.lot(lotid),
+        quantity DECIMAL(18,3) NULL,
+        uom VARCHAR(10) NULL
+    );
 
 CREATE TABLE src.shipment (
     shipmentid BIGSERIAL PRIMARY KEY,

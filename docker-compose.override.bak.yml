@@ -29,31 +29,31 @@ services:
         networks:
             - dev-network
 
-    mongodb:
-        image: mongo:latest
-        container_name: mongodb_test
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: admin
-            MONGO_INITDB_ROOT_PASSWORD: password
-        ports:
-            - "27017:27017"
-        volumes:
-            - mongodb_test_data:/data/db
-        networks:
-            - dev-network
+    # mongodb:
+    #     image: mongo:latest
+    #     container_name: mongodb_test
+    #     environment:
+    #         MONGO_INITDB_ROOT_USERNAME: admin
+    #         MONGO_INITDB_ROOT_PASSWORD: password
+    #     ports:
+    #         - "27017:27017"
+    #     volumes:
+    #         - mongodb_test_data:/data/db
+    #     networks:
+    #         - dev-network
 
-    sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        container_name: sqlserver_test
-        environment:
-            ACCEPT_EULA: "Y"
-            SA_PASSWORD: "YourStrong!Passw0rd"
-        ports:
-            - "1433:1433"
-        volumes:
-            - sqlserver_test_data:/var/opt/mssql
-        networks:
-            - dev-network
+    # sqlserver:
+    #     image: mcr.microsoft.com/mssql/server:2022-latest
+    #     container_name: sqlserver_test
+    #     environment:
+    #         ACCEPT_EULA: "Y"
+    #         SA_PASSWORD: "YourStrong!Passw0rd"
+    #     ports:
+    #         - "1433:1433"
+    #     volumes:
+    #         - sqlserver_test_data:/var/opt/mssql
+    #     networks:
+    #         - dev-network
 
 volumes:
   mongodb_test_data:

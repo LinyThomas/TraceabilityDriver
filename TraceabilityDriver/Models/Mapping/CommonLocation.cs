@@ -25,6 +25,15 @@ public class CommonLocation : CommonBaseModel
     /// </summary>
     public string? Name { get; set; } = null;
 
+    public string? Address1 { get; set; } = null;
+
+    public string? Address2 { get; set; } = null;
+
+    public string? City { get; set; } = null;
+
+    public string? State { get; set; } = null;
+
+
     /// <summary>
     /// The country of the location.
     /// </summary>
@@ -49,6 +58,23 @@ public class CommonLocation : CommonBaseModel
         if (this.Name == null && other.Name != null)
         {
             this.Name = other.Name;
+        }
+
+        if(this.Address1 == null && other.Address1 != null)
+        {
+            this.Address1 = other.Address1;
+        }
+        if(this.Address2 == null && other.Address2 != null)
+        {
+            this.Address2 = other.Address2;
+        }
+        if(this.City == null && other.City != null)
+        {
+            this.City = other.City;
+        }
+        if(this.State == null && other.State != null)
+        {
+            this.State = other.State;
         }
 
         if (this.Country == null && other.Country != null)

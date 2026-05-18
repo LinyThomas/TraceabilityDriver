@@ -93,6 +93,13 @@ public class CommonEvent : CommonBaseModel
 
     public string? ProductionMethod { get; set; } = null;
 
+    public string? HealthStatus { get; set; } = null;
+
+    public string? GeneticLine { get; set; } = null;
+
+    public string? LifeCycleStage { get; set; } = null;
+
+
     /// <summary>
     /// Merges property values from the source onto the target
     /// only if that property value has no value and the source

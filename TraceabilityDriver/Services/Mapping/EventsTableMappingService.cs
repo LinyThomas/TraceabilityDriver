@@ -207,83 +207,174 @@ public class EventsTableMappingService : IEventsTableMappingService
     /// <param name="value">The value to convert.</param>
     /// <param name="targetType">The target type to convert to.</param>
     /// <returns>The converted value.</returns>
-    public object? TryToConvertValue(string? value, Type targetType)
+    //public object? TryToConvertValue(string? value, Type targetType)
+    //{
+    //    try
+    //    {
+    //        if (value == null)
+    //        {
+    //            return null;
+    //        }
+
+    //        // unwrap target type if it is nullable
+    //        targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+    //        if (targetType == typeof(string))
+    //        {
+    //            return value;
+    //        }
+
+    //        if (targetType == typeof(int))
+    //        {
+    //            return int.Parse(value);
+    //        }
+
+    //        if (targetType == typeof(double))
+    //        {
+    //            return double.Parse(value);
+    //        }
+
+    //        if (targetType == typeof(DateTimeOffset))
+    //        {
+    //            return DateTimeOffset.Parse(value);
+    //        }
+
+    //        if (targetType == typeof(bool))
+    //        {
+    //            return bool.Parse(value);
+    //        }
+
+    //        if (targetType == typeof(Country))
+    //        {
+    //            return Countries.Parse(value);
+    //        }
+
+    //        if(targetType.IsEnum)
+    //        {
+    //            if(Enum.TryParse(targetType, value, true, out var result))
+    //            {
+    //                return result;
+    //            }
+    //        }
+
+    //        return null;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error converting value {Value} to type {TargetType}", value, targetType.Name);
+    //        return null;
+    //    }
+    //}
+
+    public object? TryToConvertValue(string? value,Type targetType)
     {
         try
         {
-            if (value == null)
-            {
+            if(value == null)
                 return null;
-            }
 
-            // unwrap target type if it is nullable
             targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
-            if (targetType == typeof(string))
-            {
+            if(targetType == typeof(string))
                 return value;
-            }
 
-            if (targetType == typeof(int))
-            {
+            if(targetType == typeof(int))
                 return int.Parse(value);
-            }
 
-            if (targetType == typeof(double))
-            {
+            if(targetType == typeof(double))
                 return double.Parse(value);
-            }
 
-            if (targetType == typeof(DateTimeOffset))
-            {
+            if(targetType == typeof(DateTimeOffset))
                 return DateTimeOffset.Parse(value);
-            }
 
-            if (targetType == typeof(bool))
-            {
+            if(targetType == typeof(bool))
                 return bool.Parse(value);
-            }
 
-            if (targetType == typeof(Country))
-            {
+            if(targetType == typeof(Country))
                 return Countries.Parse(value);
-            }
 
             if(targetType.IsEnum)
             {
-                if(Enum.TryParse(targetType, value, true, out var result))
-                {
+                if(Enum.TryParse(targetType,value,true,out var result))
                     return result;
-                }
+
+                throw new Exception($"Invalid enum value '{value}' for {targetType.Name}");
             }
 
-            return null;
+            return Convert.ChangeType(value,targetType);
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
-            _logger.LogError(ex, "Error converting value {Value} to type {TargetType}", value, targetType.Name);
+            _logger.LogError(ex,"Error converting value {Value} to type {TargetType}",value,targetType.Name);
             return null;
         }
     }
-
     /// <summary>
     /// Tries to set a value to a property.
     /// </summary>
     /// <param name="targetObject">The target object.</param>
     /// <param name="propertyInfo">The property info.</param>
     /// <param name="value">The value to set.</param>
-    public void TryToSetValue(object targetObject, PropertyInfo propertyInfo, object? value)
+    //public void TryToSetValue(object targetObject, PropertyInfo propertyInfo, object? value)
+    //{
+    //    try
+    //    {
+    //        propertyInfo.SetValue(targetObject, value);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error setting value {Value} to {TargetObject}", value, targetObject.GetType().Name);
+    //    }
+    //}
+
+    public void TryToSetValue(object targetObject,PropertyInfo propertyInfo,object? value)
     {
         try
         {
-            propertyInfo.SetValue(targetObject, value);
+            if(value == null)
+            {
+                propertyInfo.SetValue(targetObject,null);
+                return;
+            }
+
+            var targetType = propertyInfo.PropertyType;
+
+            // If already correct type ? assign directly
+            if(targetType.IsAssignableFrom(value.GetType()))
+            {
+                propertyInfo.SetValue(targetObject,value);
+                return;
+            }
+
+            object? convertedValue = null;
+
+            // If value is string ? convert properly
+            if(value is string strValue)
+            {
+                convertedValue = TryToConvertValue(strValue,targetType);
+            }
+            else
+            {
+                // fallback: try converting via string
+                convertedValue = TryToConvertValue(value.ToString(),targetType);
+            }
+
+            if(convertedValue != null)
+            {
+                propertyInfo.SetValue(targetObject,convertedValue);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Conversion failed for value {Value} to type {TargetType}",
+                    value,targetType.Name);
+            }
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
-            _logger.LogError(ex, "Error setting value {Value} to {TargetObject}", value, targetObject.GetType().Name);
+            _logger.LogError(ex,"Error setting value {Value} to {TargetObject}",value,targetObject.GetType().Name);
         }
     }
-
     /// <summary>
     /// Gets the return value of a function.
     /// </summary>

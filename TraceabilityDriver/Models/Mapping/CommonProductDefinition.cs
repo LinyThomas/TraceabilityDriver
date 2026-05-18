@@ -30,6 +30,13 @@ public class CommonProductDefinition : CommonBaseModel
     /// </summary>
     public string? ScientificName { get; set; } = null;
 
+
+    /// <summary>
+    /// The scientific 3 alpha code of the species of the product.
+    /// </summary>
+    public string? SpeciesCode { get; set; } = null;
+    
+
     /// <summary>
     /// Combines the current product definition with another product instance by merging the properties. Only properties that are null are merged.
     /// </summary>
@@ -48,10 +55,16 @@ public class CommonProductDefinition : CommonBaseModel
         {
             this.ProductForm = other.ProductForm;
         }
-        if (this.ScientificName == null && other.ScientificName != null)
+        if(this.ScientificName == null && other.ScientificName != null)
         {
             this.ScientificName = other.ScientificName;
         }
+        if (this.SpeciesCode == null && other.SpeciesCode != null)
+        {
+            this.SpeciesCode = other.SpeciesCode;
+        }
+
+       
     }
 
     /// <summary>

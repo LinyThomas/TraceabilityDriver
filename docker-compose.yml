@@ -1,6 +1,68 @@
+networks:
+  traceability-net:
+    driver: bridge
+
 services:
   traceabilitydriver:
-    image: ${DOCKER_REGISTRY-}traceabilitydriver
     build:
       context: .
       dockerfile: TraceabilityDriver/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
+    image: traceabilitydriver:latest
+    container_name: traceabilitydriver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - traceability-mongo
+    env_file:
+      - .env  
+    environment:
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DISABLE_HTTPS_REDIRECTION=TRUE
+
+      # App folders
+      - TD_MAPPINGS_FOLDER=/app/Mappings
+      - TD_KEYS_FOLDER=/home/keys
+
+      # MongoDB settings
+      - MongoDB__ConnectionString=mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@traceability-mongo:27017/traceability_cache?authSource=admin
+      - MongoDB__DatabaseName=traceability_cache
+      - MongoDB__EventsCollectionName=events
+      - MongoDB__MasterDataCollectionName=masterdata
+      - MongoDB__SyncHistoryCollectionName=synchistory
+      - MongoDB__LogCollectionName=logs
+
+      # External PostgreSQL
+      - ConnectionStrings__PostgresConnection=${POSTGRES_CONNECTION}
+      - TDConnectors__0__ConnectionString=${TDConnectors__0__ConnectionString}
+
+    volumes:
+      - ./TraceabilityDriver/appsettings.json:/app/appsettings.json
+      - ./TraceabilityDriver/Mappings:/app/Mappings
+      - ./TraceabilityDriver/Keys:/home/keys
+
+    networks:
+      - traceability-net
+    restart: unless-stopped
+
+  traceability-mongo:
+    image: mongo:latest
+    container_name: traceability-mongo
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: traceability_cache
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - traceability-net
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+    driver: local

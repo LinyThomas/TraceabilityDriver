@@ -18,6 +18,18 @@ namespace TraceabilityDriver.Models.Mapping
         /// </summary>
         public string? Name { get; set; } = null;
 
+        public string? Address1 { get; set; } = null;
+
+        public string? Address2 { get; set; } = null;
+
+        public string? City { get; set; } = null;
+
+        public string? State { get; set; } = null;
+
+        public string? Country { get; set; } = null;
+
+
+
         /// <summary>
         /// Retrieves a PGLN object using the OwnerId property. Throws an exception if OwnerId is null or whitespace.
         /// </summary>
@@ -48,6 +60,27 @@ namespace TraceabilityDriver.Models.Mapping
             if (string.IsNullOrWhiteSpace(this.Name) && !string.IsNullOrWhiteSpace(source.Name))
             {
                 this.Name = source.Name;
+            }
+
+            if(string.IsNullOrWhiteSpace(this.Address1) && !string.IsNullOrWhiteSpace(source.Address1))
+            {
+                this.Address1 = source.Address1;
+            }
+            if(string.IsNullOrWhiteSpace(this.Address2) && !string.IsNullOrWhiteSpace(source.Address2))
+            {
+                this.Address2 = source.Address2;
+            }
+            if(string.IsNullOrWhiteSpace(this.City) && !string.IsNullOrWhiteSpace(source.City))
+            {
+                this.City = source.City;
+            }
+            if(string.IsNullOrWhiteSpace(this.State) && !string.IsNullOrWhiteSpace(source.State))
+            {
+                this.State = source.State;
+            }
+            if(string.IsNullOrWhiteSpace(this.Country) && !string.IsNullOrWhiteSpace(source.Country))
+            {
+                this.Country = source.Country;
             }
         }
     }

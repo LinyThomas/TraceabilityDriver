@@ -64,7 +64,7 @@ try
     Log.Information("GDST Cache database initialized successfully.");
 
     Log.Information("Starting TraceabilityDriver application");
-    app.Run();
+    app.Run("http://localhost:5005");
 }
 catch (Exception ex)
 {

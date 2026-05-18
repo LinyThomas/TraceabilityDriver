@@ -179,12 +179,12 @@ namespace TraceabilityDriver
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // Configure the HTTP request pipeline.
-            if (env.IsDevelopment())
-            {
+            //// Configure the HTTP request pipeline.
+            //if (env.IsDevelopment())
+            //{
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }
+            //}
 
             // docker containers are often deployed behind a reverse proxy that handles https communication.
             // In those cases, the app in the container itself does not need to enforce https.

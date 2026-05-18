@@ -1090,7 +1090,10 @@ public class EventsConverterService : IEventsConverterService
                 certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
                 {
                     CertificateType = "urn:gdst:certType:harvestCoC",
-                    Identification = certificates.ChainOfCustodyCertification.Identifier
+                    Identification = certificates.ChainOfCustodyCertification.Identifier,
+                    Value= certificates.ChainOfCustodyCertification.CertificationValue,
+                    Standard = certificates.ChainOfCustodyCertification.CertificationStandard,
+                    Agency=certificates.ChainOfCustodyCertification.CertificationAgency
                 });
             }
 
@@ -1099,7 +1102,10 @@ public class EventsConverterService : IEventsConverterService
                 certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
                 {
                     CertificateType = "urn:gdst:certType:humanPolicy",
-                    Identification = certificates.HumanPolicyCertificate.Identifier
+                    Identification = certificates.HumanPolicyCertificate.Identifier,
+                    Value = certificates.HumanPolicyCertificate.CertificationValue,
+                    Standard = certificates.HumanPolicyCertificate.CertificationStandard,
+                    Agency = certificates.HumanPolicyCertificate.CertificationAgency
                 });
             }
 
@@ -1108,7 +1114,11 @@ public class EventsConverterService : IEventsConverterService
                 certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
                 {
                     CertificateType = "urn:gdst:certType:harvestCert",
-                    Identification = certificates.HarvestCertification.Identifier
+                    Identification = certificates.HarvestCertification.Identifier,
+                    Value = certificates.HarvestCertification.CertificationValue,
+                    Standard = certificates.HarvestCertification.CertificationStandard,
+                    Agency = certificates.HarvestCertification.CertificationAgency
+
                 });
             }
         }
@@ -1180,8 +1190,64 @@ public class EventsConverterService : IEventsConverterService
             TradingParty tradingParty = new TradingParty();
             tradingParty.PGLN = party.GetPGLN();
             tradingParty.Name = new List<OpenTraceability.Models.Common.LanguageString>();
-            tradingParty.Name.Add(new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = party.Name });
+            if(!string.IsNullOrWhiteSpace(party.Name))
+            {
+                tradingParty.Name.Add(new OpenTraceability.Models.Common.LanguageString() { Language = "en-US",Value = party.Name });
+            }
+            tradingParty.Address = new OpenTraceability.Models.MasterData.Address()
+            {
+                Address1 = new List<OpenTraceability.Models.Common.LanguageString>(),
+                Address2 = new List<OpenTraceability.Models.Common.LanguageString>(),
+                City = new List<OpenTraceability.Models.Common.LanguageString>(),
+                State = new List<OpenTraceability.Models.Common.LanguageString>()
+            };
+            if(!string.IsNullOrWhiteSpace(party.Address1))
+            {
+                tradingParty.Address.Address1.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = party.Address1
+                });
+            }
 
+            if(!string.IsNullOrWhiteSpace(party.Address2))
+            {
+                tradingParty.Address.Address2.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = party.Address2
+                });
+            }
+
+            if(!string.IsNullOrWhiteSpace(party.City))
+            {
+                tradingParty.Address.City.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = party.City
+                });
+            }
+
+            if(!string.IsNullOrWhiteSpace(party.State))
+            {
+                tradingParty.Address.State.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = party.State
+                });
+            }
+            // Country (safe)
+            if(!string.IsNullOrWhiteSpace(party.Country))
+            {
+                tradingParty.Address.Country = new OpenTraceability.Utility.Country()
+                {
+                    Abbreviation = party.Country
+                };
+            }
+            if(doc.MasterData == null)
+            {
+                doc.MasterData = new List<IVocabularyElement>();
+            }
             if (doc.MasterData.All(x => x.ID != tradingParty.PGLN.ToString()))
             {
                 doc.MasterData.Add(tradingParty);
@@ -1211,7 +1277,49 @@ public class EventsConverterService : IEventsConverterService
             loc.GLN = evt.Location.GLN;
             loc.Name = new List<OpenTraceability.Models.Common.LanguageString>();
             loc.Name.Add(new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = location.Name });
-            loc.Address = new OpenTraceability.Models.MasterData.Address();
+           
+            loc.Address = new OpenTraceability.Models.MasterData.Address()
+            {
+                Address1 = new List<OpenTraceability.Models.Common.LanguageString>(),
+                Address2 = new List<OpenTraceability.Models.Common.LanguageString>(),
+                City = new List<OpenTraceability.Models.Common.LanguageString>(),
+                State = new List<OpenTraceability.Models.Common.LanguageString>()
+            };
+            if(!string.IsNullOrWhiteSpace(location.Address1))
+            {
+                loc.Address.Address1.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = location.Address1
+                });
+            }
+
+            if(!string.IsNullOrWhiteSpace(location.Address2))
+            {
+                loc.Address.Address2.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = location.Address2
+                });
+            }
+
+            if(!string.IsNullOrWhiteSpace(location.City))
+            {
+                loc.Address.City.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = location.City
+                });
+            }
+
+            if(!string.IsNullOrWhiteSpace(location.State))
+            {
+                loc.Address.State.Add(new OpenTraceability.Models.Common.LanguageString()
+                {
+                    Language = "en-US",
+                    Value = location.State
+                });
+            }
             if (location.OwnerId != null)
             {
                 loc.OwningParty = location.GeneratePGLN(location.OwnerId);
@@ -1245,10 +1353,16 @@ public class EventsConverterService : IEventsConverterService
         tradeItem.ShortDescription.Add(new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = productDef.ShortDescription });
         tradeItem.TradeItemConditionCode = productDef.ProductForm;
         tradeItem.FisherySpeciesScientificName = new List<string>();
+        tradeItem.FisherySpeciesCode = new List<string>();
 
         if (!string.IsNullOrWhiteSpace(productDef.ScientificName))
         {
             tradeItem.FisherySpeciesScientificName.Add(productDef.ScientificName);
+        }
+
+        if(!string.IsNullOrWhiteSpace(productDef.SpeciesCode))
+        {
+            tradeItem.FisherySpeciesCode.Add(productDef.SpeciesCode);
         }
 
         if (productDef.OwnerId != null)
