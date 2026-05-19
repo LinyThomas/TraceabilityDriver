@@ -7,7 +7,6 @@
 .vs/**
 **/Logs/**
 .env
-**/mappings/**
 /TraceabilityDriver/appsettings.Development.json
 /TraceabilityDriver/BuildInstructions.md
 *.mkv
