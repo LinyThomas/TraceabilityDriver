@@ -4,6 +4,7 @@ networks:
 
 services:
   traceabilitydriver:
+    restart: always
     build:
       context: .
       dockerfile: TraceabilityDriver/Dockerfile
