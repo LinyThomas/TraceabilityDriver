@@ -73,7 +73,7 @@ namespace TraceabilityDriver.Services.GDST
             //        apiKey = validKeys.First();
             //    }
             //}
-            string apiKey = _config["Authentication:APIKey:ValidKeys"] ?? string.Empty;
+            string apiKey = _config["GDST:APIKey"] ?? string.Empty;
 
             JObject json = new JObject();
             json["SolutionName"] = _settings.Value.SolutionName;
