@@ -81,7 +81,8 @@ namespace TraceabilityDriver.Services.GDST
             json["URL"] = digitalLinkURL;
             json["PGLN"] = _settings.Value.PGLN;
             json["GDSTVersion"] = "12";
-            json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
+            //json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
+            json["EPCIS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
 
             using var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Add("X-API-Key", _settings.Value.ApiKey);
