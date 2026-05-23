@@ -47,7 +47,6 @@ services:
 
     networks:
       - traceability-net
-    restart: unless-stopped
 
   traceability-mongo:
     image: mongo:latest
