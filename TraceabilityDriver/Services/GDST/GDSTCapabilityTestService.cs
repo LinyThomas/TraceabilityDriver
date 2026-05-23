@@ -60,19 +60,20 @@ namespace TraceabilityDriver.Services.GDST
 
         public async Task<GDSTCapabilityTestResults> ExecuteTestAsync()
         {
-            string digitalLinkURL = _config["URL"]?.TrimEnd('/') + "/digitallink/";
+            string digitalLinkURL = _config["GDST:URL"]?.TrimEnd('/') + "/digitallink/";
 
             // if the app has an api key configured,
             // we need include it in the request to the capability tool
-            string apiKey = "123";
-            if (_config.GetSection("Authentication:APIKey").Exists())
-            {
-                List<string> validKeys = _config.GetSection("Authentication:APIKey:ValidKeys").Get<List<string>>() ?? new List<string>();
-                if (validKeys.Any())
-                {
-                    apiKey = validKeys.First();
-                }
-            }
+            // string apiKey = "123";
+            //if (_config.GetSection("Authentication:APIKey").Exists())
+            //{
+            //    List<string> validKeys = _config.GetSection("Authentication:APIKey:ValidKeys").Get<List<string>>() ?? new List<string>();
+            //    if (validKeys.Any())
+            //    {
+            //        apiKey = validKeys.First();
+            //    }
+            //}
+            string apiKey = _config["Authentication:APIKey:ValidKeys"] ?? string.Empty;
 
             JObject json = new JObject();
             json["SolutionName"] = _settings.Value.SolutionName;
@@ -82,10 +83,12 @@ namespace TraceabilityDriver.Services.GDST
             json["PGLN"] = _settings.Value.PGLN;
             json["GDSTVersion"] = "12";
             //json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
-            json["EPCIS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
+            json["EPCS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
 
             using var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("X-API-Key", _settings.Value.ApiKey);
+            client.DefaultRequestHeaders.Add("X-API-Key",_config["GDST:APIKey"]);
+            _logger.LogInformation("Capability API Key = {Key}", _config["GDST:APIKey"]
+);
             client.BaseAddress = new Uri(_settings.Value.Url);
             var response = await client.PostAsync("/process/start", new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
 
@@ -109,13 +112,12 @@ namespace TraceabilityDriver.Services.GDST
         public async Task<GDSTCapabilityTestResults> PollForResultsAsync(GDSTCapabilityTestModel test)
         {
             using var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("X-API-Key", _settings.Value.ApiKey);
+            client.DefaultRequestHeaders.Add("X-API-Key",_config["GDST:APIKey"]);
             client.DefaultRequestHeaders.Add("X-Capability-Process-UUID", test.ComplianceProcessUUID);
             client.BaseAddress = new Uri(_settings.Value.Url);
 
             GDSTCapabilityTestResults results = new GDSTCapabilityTestResults()
-            {
-                Status = GDSTCapabilityTestStatus.Started
+            {                Status = GDSTCapabilityTestStatus.Started
             };
 
             // Now we need to poll for up to 5 minutes to get the response.
