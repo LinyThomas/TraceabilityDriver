@@ -76,20 +76,20 @@ namespace TraceabilityDriver.Services.GDST
             string apiKey = _config["GDST:APIKey"] ?? string.Empty;
 
             JObject json = new JObject();
-            json["SolutionName"] = _settings.Value.SolutionName;
+            json["SolutionName"] = _config["GDST:SolutionName"] ?? string.Empty; 
             json["Version"] = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
             json["APIKey"] = apiKey;
             json["URL"] = digitalLinkURL;
-            json["PGLN"] = _settings.Value.PGLN;
+            json["PGLN"] = _config["GDST:PGLN"] ?? string.Empty;
             json["GDSTVersion"] = "12";
             //json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
-            json["EPCS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
-
+            //json["EPCS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
+            json["EPCS"] = _config["GDST:EPCS"] ?? string.Empty;
             using var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Add("X-API-Key",_config["GDST:APIKey"]);
             _logger.LogInformation("Capability API Key = {Key}", _config["GDST:APIKey"]
 );
-            client.BaseAddress = new Uri(_settings.Value.Url);
+            client.BaseAddress = new Uri(_config["GDST:CapabilityTest:Url"] ?? string.Empty);
             var response = await client.PostAsync("/process/start", new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
 
             if (response.IsSuccessStatusCode)
