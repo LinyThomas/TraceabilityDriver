@@ -209,13 +209,15 @@ namespace TraceabilityDriver
 
             app.UseStaticFiles();
             app.UseAntiforgery();
-
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers(); // For Web API
                 endpoints.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode();
+                endpoints.MapFallbackToPage("/_Host");
             });
+
         }
     }
 }
