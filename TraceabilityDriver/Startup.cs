@@ -215,7 +215,7 @@ namespace TraceabilityDriver
                 endpoints.MapControllers(); // For Web API
                 endpoints.MapRazorComponents<App>()
                     .AddInteractiveServerRenderMode();
-                endpoints.MapFallbackToPage("/_Host");
+                
             });
 
         }
