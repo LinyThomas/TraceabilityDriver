@@ -80,20 +80,32 @@ namespace TraceabilityDriver.Controllers
 
             // Query MongoDB for events
             EPCISQueryDocument epcisDoc = await _dbService.QueryEvents(options);
+            epcisDoc.EPCISVersion = EPCISVersion.V2;
+            epcisDoc.QueryName = "SimpleEventQuery"; 
+            epcisDoc.SubscriptionID = "";
+            EnsureJsonLdContext(epcisDoc);
 
             // Determine response format based on headers
-            IEPCISQueryDocumentMapper mapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
-            if (HttpContext.Request.Headers["GS1-EPCIS-Version"].FirstOrDefault() != "1.2")
+            IEPCISQueryDocumentMapper mapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
+            if (HttpContext.Request.Headers["GS1-EPCIS-Version"].FirstOrDefault() == "1.2")
             {
-                epcisDoc.EPCISVersion = EPCISVersion.V2;
-                mapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
+                epcisDoc.EPCISVersion = EPCISVersion.V1;
+                mapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
             }
+           
 
             // Add response headers
-            foreach (var header in HttpContext.Request.Headers.Where(h => h.Key.StartsWith("GS1-")))
+            foreach(var header in HttpContext.Request.Headers.Where(h => h.Key.StartsWith("GS1-")))
             {
-                HttpContext.Response.Headers.Add(header);
+                HttpContext.Response.Headers[header.Key] = header.Value.ToString();
             }
+            HttpContext.Response.ContentType = "application/json";
+            HttpContext.Response.Headers["GS1-EPCIS-Version"] = "2.0";
+            HttpContext.Response.Headers["GS1-EPCIS-Min"] = "2.0";
+            HttpContext.Response.Headers["GS1-EPCIS-Max"] = "2.0";
+            HttpContext.Response.Headers["GS1-CBV-Version"] = "2.0";
+            HttpContext.Response.Headers["GS1-EPC-Version"] = "ALWAYS_EPC_URN";
+            HttpContext.Response.Headers["GS1-CBV-XML-Format"] = "ALWAYS_URN";
 
             HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
@@ -101,6 +113,20 @@ namespace TraceabilityDriver.Controllers
 
             await HttpContext.Response.WriteAsync(str);
             return Empty;
+        }
+        private void EnsureJsonLdContext(EPCISQueryDocument doc)
+        {
+            doc.Contexts ??= new List<string>();
+            doc.Namespaces ??= new Dictionary<string,string>();
+
+            var epcisContext = "https://ref.gs1.org/standards/epcis/epcis-context.jsonld";
+            if(!doc.Contexts.Contains(epcisContext))
+            {
+                doc.Contexts.Insert(0,epcisContext);
+            }
+
+            doc.Namespaces["gdst"] = OpenTraceability.Constants.GDST_NAMESPACE;
+            doc.Namespaces["cbvmda"] = OpenTraceability.Constants.CBVMDA_NAMESPACE;
         }
 
         private IActionResult? ValidateHeader(string name, string expectedValue, string expectedValueText)

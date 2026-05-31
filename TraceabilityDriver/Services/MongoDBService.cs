@@ -299,6 +299,8 @@ namespace TraceabilityDriver.Services
             // Convert results back to EPCIS events
             var doc = new EPCISQueryDocument();
             doc.EPCISVersion = EPCISVersion.V2;
+            doc.QueryName = "SimpleEventQuery";
+            doc.SubscriptionID = string.Empty;
             doc.Events = new List<IEvent>();
 
             ConcurrentBag<EPCISQueryDocument> queryDocs = new();

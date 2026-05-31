@@ -56,7 +56,7 @@ startup.Configure(app, app.Environment);
 try
 {
     Log.Information("Initializing GDST Cache database...");
-    using (var scope = app.Services.CreateScope())
+    using(var scope = app.Services.CreateScope())
     {
         var dbService = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
         await dbService.InitializeDatabase();
@@ -64,7 +64,7 @@ try
     Log.Information("GDST Cache database initialized successfully.");
 
     Log.Information("Starting TraceabilityDriver application");
-    app.Run("http://localhost:5005");
+    app.Run();
 }
 catch (Exception ex)
 {
