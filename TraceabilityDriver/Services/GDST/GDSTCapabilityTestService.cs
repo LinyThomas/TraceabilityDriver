@@ -81,10 +81,8 @@ namespace TraceabilityDriver.Services.GDST
             json["APIKey"] = apiKey;
             json["URL"] = digitalLinkURL;
             json["PGLN"] = _config["GDST:CapabilityTest:PGLN"] ?? string.Empty;
-            json["GDSTVersion"] = _config["GDST:GDSTVersion"] ?? string.Empty; ;
-            //json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
+            json["GDSTVersion"] = _config["GDST:GDSTVersion"] ?? string.Empty; 
             json["EPCS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
-            //json["EPCS"] = _config["GDST:EPCS"] ?? string.Empty;
             // Read EPCS array from config
             //var epcsArray = _config.GetSection("GDST:EPCS").Get<string[]>() ?? Array.Empty<string>();
             //json["EPCS"] = new JArray(epcsArray);
