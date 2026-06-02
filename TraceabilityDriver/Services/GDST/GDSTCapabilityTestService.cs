@@ -73,21 +73,25 @@ namespace TraceabilityDriver.Services.GDST
             //        apiKey = validKeys.First();
             //    }
             //}
-            string apiKey = _config["GDST:APIKey"] ?? string.Empty;
+            string apiKey = _config["GDST:CapabilityTest:APIKey"] ?? string.Empty;
 
             JObject json = new JObject();
-            json["SolutionName"] = _config["GDST:SolutionName"] ?? string.Empty; 
+            json["SolutionName"] = _config["GDST:CapabilityTest:SolutionName"] ?? string.Empty; 
             json["Version"] = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
             json["APIKey"] = apiKey;
             json["URL"] = digitalLinkURL;
-            json["PGLN"] = _config["GDST:PGLN"] ?? string.Empty;
-            json["GDSTVersion"] = "12";
+            json["PGLN"] = _config["GDST:CapabilityTest:PGLN"] ?? string.Empty;
+            json["GDSTVersion"] = _config["GDST:GDSTVersion"] ?? string.Empty; ;
             //json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
             //json["EPCS"] = new JArray("urn:gdst:seafsoft.com:product:lot:class:idop4.idop08901234000012.lot-bw-20260401-002");
-            json["EPCS"] = _config["GDST:EPCS"] ?? string.Empty;
+            //json["EPCS"] = _config["GDST:EPCS"] ?? string.Empty;
+            // Read EPCS array from config
+            var epcsArray = _config.GetSection("GDST:EPCS").Get<string[]>() ?? Array.Empty<string>();
+            json["EPCS"] = new JArray(epcsArray);
+
             using var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("X-API-Key",_config["GDST:APIKey"]);
-            _logger.LogInformation("Capability API Key = {Key}", _config["GDST:APIKey"]
+            client.DefaultRequestHeaders.Add("X-API-Key",_config["GDST:CapabilityTest:APIKey"]);
+            _logger.LogInformation("Capability API Key = {Key}", _config["GDST:CapabilityTest:APIKey"]
 );
             client.BaseAddress = new Uri(_config["GDST:CapabilityTest:Url"] ?? string.Empty);
             var response = await client.PostAsync("/process/start", new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
