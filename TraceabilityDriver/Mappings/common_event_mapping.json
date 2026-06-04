@@ -82,7 +82,9 @@
                   "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
                   "OwnerId": "GenerateIdentifier(!IDOP,$operatorCode,$operatorId)",
                   "ShortDescription": "$itemName",
-                  "ProductForm": "$productForm"
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificname",
+                  "SpeciesCode": "$speciesCode"
                 }
               }
             ],
