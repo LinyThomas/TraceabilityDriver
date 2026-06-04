@@ -79,7 +79,7 @@ namespace TraceabilityDriver.Services
                 {
                     EventId = evt.EventID.ToString(),
                     EventJson = json,
-                    BizStep = evt.BusinessStep.ToString().ToLower(),
+                    BizStep = evt.BusinessStep.ToString(),
                     Action = evt.Action.ToString()?.ToLower() ?? "",
                     EventTime = evt.EventTime,
                     EPCs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList(),
@@ -308,6 +308,7 @@ namespace TraceabilityDriver.Services
             {
                 EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(eventItem.EventJson);
                 queryDocs.Add(queryDoc);
+
             });
 
             foreach (var queryDoc in queryDocs)
@@ -471,4 +472,4 @@ namespace TraceabilityDriver.Services
                     Builders<SyncHistoryItem>.IndexKeys.Ascending(s => s.EndTime)));
         }
     }
-} 
+}
