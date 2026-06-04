@@ -77,13 +77,7 @@
                 "ProductType": "$product_type",
                 "LotNumber": "$lotNumber",
                 "Quantity": "$qty",
-                "UoM": "Dictionary($uom, UomToEpcis)",
-                "ProductDefinition": {
-                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
-                  "OwnerId": "GenerateIdentifier(!IDOP,$operatorCode,$operatorId)",
-                  "ShortDescription": "$itemName",
-                  "ProductForm": "$productForm"
-                }
+                "UoM": "Dictionary($uom, UomToEpcis)"               
               }
             ],
             "Certificates": {
