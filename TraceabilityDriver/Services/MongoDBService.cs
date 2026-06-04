@@ -80,7 +80,7 @@ namespace TraceabilityDriver.Services
                     EventId = evt.EventID.ToString(),
                     EventJson = json,
                     BizStep = evt.BusinessStep.ToString(),
-                    Action = evt.Action.ToString()?.ToLower() ?? "",
+                    Action = evt.Action.ToString()?? "",
                     EventTime = evt.EventTime,
                     EPCs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList(),
                     ProductGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString().ToLower()).Where(g => g != null).Select(g => g!).ToList(),
