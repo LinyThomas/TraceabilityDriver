@@ -21,9 +21,10 @@
     }
   },
   "Mappings": [
-    
+
     {
       "Id": "GDST_FEEDMILL",
+      "EventType": "!gdstfeedmillobjectevent",
       "Selectors": [
         {
           "Id": "SEL_GDST_FEEDMILL",
@@ -114,6 +115,7 @@
     },
     {
       "Id": "GDST_HATCHERY",
+      "EventType": "!gdsthatchingevent",
       "Selectors": [
         {
           "Id": "SEL_GDST_HATCHERY",
@@ -184,6 +186,7 @@
     },
     {
       "Id": "GDST_FARMHARVEST",
+      "EventType": "!gdstfarmharvestevent",
       "Selectors": [
         {
           "Id": "SEL_FARMHARVEST",
@@ -274,6 +277,7 @@
     },
     {
       "Id": "GDST_SHIPPING",
+      "EventType": "!gdstshippingevent",
       "Selectors": [
         {
           "Id": "SEL_GDST_SHIPPING",
@@ -393,6 +397,7 @@
     },
     {
       "Id": "GDST_RECEIVING",
+      "EventType": "!gdstreceiveevent",
       "Selectors": [
         {
           "Id": "SEL_GDST_RECEIVING",
@@ -474,6 +479,7 @@
     },
     {
       "Id": "GDST_PROCESSING_OUTPUTS",
+      "EventType": "!gdstprocessingevent",
       "Selectors": [
         {
           "Id": "SEL_GDST_PROCESSING_OUTPUTS",
@@ -561,6 +567,7 @@
     },
     {
       "Id": "GDST_AGGREGATION_ADD",
+      "EventType": "!gdstaggregationevent",
       "Selectors": [
         {
           "Id": "SEL_GDST_AGGREGATION_ADD",
