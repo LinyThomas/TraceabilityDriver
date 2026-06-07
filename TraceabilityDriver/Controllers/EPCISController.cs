@@ -82,7 +82,7 @@ namespace TraceabilityDriver.Controllers
             EPCISQueryDocument epcisDoc = await _dbService.QueryEvents(options);
             epcisDoc.EPCISVersion = EPCISVersion.V2;
             epcisDoc.QueryName = "SimpleEventQuery"; 
-            epcisDoc.SubscriptionID = "";
+            epcisDoc.SubscriptionID = "32d2aec1-a6d2-46d9-900a-24124288cce1";
             EnsureJsonLdContext(epcisDoc);
 
             // Determine response format based on headers
