@@ -48,7 +48,12 @@
             "HumanWelfarePolicy": "$humanpolicyId",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $operatorCode, $operatorId)",
-              "Name": "$operatorName"
+              "Name": "$operatorName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
 
             "ProductOwner": {
@@ -136,7 +141,12 @@
             "HumanWelfarePolicy": "$humanpolicyId",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $operatorCode, $operatorId)",
-              "Name": "$operatorName"
+              "Name": "$operatorName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
             "ProductOwner": {
               "OwnerId": "GenerateIdentifier(!P, $operatorCode, $operatorId)",
@@ -207,7 +217,12 @@
             "HumanWelfarePolicy": "!3P Audit",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $operatorCode, $operatorId)",
-              "Name": "$operatorName"
+              "Name": "$operatorName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
             "ProductOwner": {
               "OwnerId": "GenerateIdentifier(!P,$operatorCode,$operatorId)",
@@ -298,7 +313,12 @@
             "HumanWelfarePolicy": "!3P Audit",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P,$ownerCode, $infoProviderId)",
-              "Name": "$infoProviderName"
+              "Name": "$infoProviderName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
             "ProductOwner": {
               "OwnerId": "GenerateIdentifier(!P,,$ownerCode, $ownerId)",
@@ -418,7 +438,12 @@
             "HumanWelfarePolicy": "$humanpolicyId",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName"
+              "Name": "$infoProviderName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
             "ProductOwner": {
               "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
@@ -500,7 +525,12 @@
             "HumanWelfarePolicy": "$humanpolicyId",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName"
+              "Name": "$infoProviderName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
             "ProductOwner": {
               "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
@@ -588,7 +618,12 @@
             "HumanWelfarePolicy": "!3P Audit",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName"
+              "Name": "$infoProviderName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
             },
             "ProductOwner": {
               "OwnerId": "GenerateIdentifier(!P, $ownerId)",
