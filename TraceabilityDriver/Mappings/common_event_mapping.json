@@ -291,6 +291,192 @@
       ]
     },
     {
+      "Id": "GDST_PROCESSING_OUTPUTS",
+      "EventType": "!gdstprocessingevent",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_PROCESSING_OUTPUTS",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.stp_tx_processingbatch b WHERE b.isactive = TRUE AND b.processingbatchid > @LastID",
+          "Selector": "WITH base_event AS ( SELECT b.processingbatchid AS idEventRecord, b.batchnumber, b.eventtimeutc AS eventTime, b.facilitylocationid, b.processingtypecode, b.informationproviderpartyid AS infoProviderId, b.productownerpartyid AS ownerId, op.partycode AS ownerCode, op.partyname AS ownerName, op.addressline1 AS ownerAddress1, op.addressline2 AS ownerAddress2, op.city AS ownerCity, op.stateprovince AS ownerState, op.country AS ownerCountry, ip.partyname AS infoProviderName, loc.locationcode AS locCode, loc.locationname AS locName, loc.addressline1 AS locAddress1, loc.addressline2 AS locAddress2, loc.city AS locCity, loc.stateprovince AS locState, loc.country AS locCountry, loc.registrationnumber AS locRegistrationnumber, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationidentification END) AS humanpolicyId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationvalue END) AS humanpolicyValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationstandard END) AS humanpolicyStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationagency END) AS humanpolicyAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationidentification END) AS harvestId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationvalue END) AS harvestValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationstandard END) AS harvestStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationagency END) AS harvestAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationidentification END) AS harvestcocId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationvalue END) AS harvestcocValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationstandard END) AS harvestcocStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationagency END) AS harvestcocAgency FROM src.stp_tx_processingbatch b LEFT JOIN src.stp_md_locations loc ON b.facilitylocationid = loc.locationid LEFT JOIN src.stp_md_parties op ON b.productownerpartyid = op.partyid LEFT JOIN src.stp_md_parties ip ON b.informationproviderpartyid = ip.partyid LEFT JOIN src.stp_tx_processingbatch_certificates pbc ON pbc.processingbatchid = b.processingbatchid LEFT JOIN src.stp_md_certificates c ON pbc.certificateid = c.certificateid WHERE b.isactive = TRUE AND b.processingbatchid > @LastID GROUP BY b.processingbatchid, b.batchnumber, b.eventtimeutc, b.facilitylocationid, b.processingtypecode, b.informationproviderpartyid, b.productownerpartyid, op.partycode, op.partyname, op.addressline1, op.addressline2, op.city, op.stateprovince, op.country, ip.partyname, loc.locationcode, loc.locationname, loc.addressline1, loc.addressline2, loc.city, loc.stateprovince, loc.country, loc.registrationnumber ), all_products AS ( SELECT b.processingbatchid, 'Input' AS product_type, l.lotcode AS lotNumber, pi.quantity AS qty, u.code AS uom, COALESCE(pd.gtin, l.lotcode) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_processingbatch b JOIN src.stp_tx_processinginput pi ON pi.processingbatchid = b.processingbatchid JOIN src.stp_tx_lots l ON pi.lotid = l.lotid LEFT JOIN src.stp_md_uom u ON pi.uomid = u.uomid LEFT JOIN src.stp_md_productdefinitions pd ON l.productdefinitionid = pd.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE b.isactive = TRUE AND b.processingbatchid > @LastID UNION ALL SELECT b.processingbatchid, 'Output' AS product_type, l.lotcode AS lotNumber, po.quantity AS qty, u.code AS uom, COALESCE(pd.gtin, l.lotcode) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_processingbatch b JOIN src.stp_tx_processingoutput po ON po.processingbatchid = b.processingbatchid JOIN src.stp_tx_lots l ON po.lotid = l.lotid LEFT JOIN src.stp_md_uom u ON po.uomid = u.uomid LEFT JOIN src.stp_md_productdefinitions pd ON l.productdefinitionid = pd.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE b.isactive = TRUE AND b.processingbatchid > @LastID ) SELECT be.idEventRecord, be.batchnumber, be.eventTime, p.product_type, p.lotNumber, p.qty, p.uom, p.gtin, p.itemName, p.productForm, p.scientificname, p.speciesCode, be.infoProviderId, be.infoProviderName, be.ownerId, be.ownerCode, be.ownerName, be.ownerAddress1, be.ownerAddress2, be.ownerCity, be.ownerState, be.ownerCountry, be.locCode, be.locName, be.locAddress1, be.locAddress2, be.locCity, be.locState, be.locCountry, be.locRegistrationnumber, be.humanpolicyId, be.humanpolicyValue, be.humanpolicyStandard, be.humanpolicyAgency, be.harvestId, be.harvestValue, be.harvestStandard, be.harvestAgency, be.harvestcocId, be.harvestcocValue, be.harvestcocStandard, be.harvestcocAgency, be.processingtypecode FROM base_event be JOIN all_products p ON p.processingbatchid = be.idEventRecord ORDER BY be.idEventRecord, p.product_type DESC, p.lotNumber LIMIT @limit OFFSET @offset;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstprocessingevent",
+            "EventTime": "$eventTime",
+            "HumanWelfarePolicy": "$humanpolicyId",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
+              "Name": "$ownerName",
+              "Address1": "$ownerAddress1",
+              "Address2": "$ownerAddress2",
+              "City": "$ownerCity",
+              "State": "$ownerState",
+              "Country": "$ownerCountry"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
+              "RegistrationNumber": "$locRegistrationnumber",
+              "Name": "$locName",
+              "Address1": "$locAddress1",
+              "Address2": "$locAddress2",
+              "City": "$locCity",
+              "State": "$locState",
+              "Country": "$locCountry"
+            },
+
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "$product_type",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
+                  "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificname",
+                  "SpeciesCode": "$speciesCode"
+                }
+              }
+            ],
+            "Certificates": {
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanpolicyId",
+                "CertificationValue": "$humanpolicyValue",
+                "CertificationStandard": "$humanpolicyStandard",
+                "CertificationAgency": "$humanpolicyAgency"
+              },
+              "HarvestCertification": {
+                "Identifier": "$harvestId",
+                "CertificationValue": "$harvestValue",
+                "CertificationStandard": "$harvestStandard",
+                "CertificationAgency": "$harvestAgency"
+              },
+
+              "ChainOfCustodyCertification": {
+                "Identifier": "$harvestcocId",
+                "CertificationValue": "$harvestcocValue",
+                "CertificationStandard": "$harvestcocStandard",
+                "CertificationAgency": "$harvestcocAgency"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Id": "GDST_AGGREGATION_ADD",
+      "EventType": "!gdstaggregationevent",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_AGGREGATION_ADD",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.stp_tx_aggregationevents ae WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID",
+          "Selector": "WITH base_event AS ( SELECT ae.aggregationeventid as idEventRecord, ae.eventnumber, ae.eventtimeutc AS eventTime, ae.locationid, ae.eventtype, ae.informationproviderpartyid AS infoProviderId, ae.productownerpartyid AS ownerId, op.partycode AS ownerCode, op.partyname AS ownerName, op.addressline1 AS ownerAddress1, op.addressline2 AS ownerAddress2, op.city AS ownerCity, op.stateprovince AS ownerState, op.country AS ownerCountry, ip.partyname AS infoProviderName, loc.locationcode AS locCode, loc.locationname AS locName, loc.addressline1 AS locAddress1, loc.addressline2 AS locAddress2, loc.city AS locCity, loc.stateprovince AS locState, loc.country AS locCountry, loc.registrationnumber AS locRegistrationnumber, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationidentification END) AS humanpolicyId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationvalue END) AS humanpolicyValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationstandard END) AS humanpolicyStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationagency END) AS humanpolicyAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationidentification END) AS harvestId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationvalue END) AS harvestValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationstandard END) AS harvestStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationagency END) AS harvestAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationidentification END) AS harvestcocId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationvalue END) AS harvestcocValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationstandard END) AS harvestcocStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationagency END) AS harvestcocAgency FROM src.stp_tx_aggregationevents ae LEFT JOIN src.stp_md_locations loc ON ae.locationid = loc.locationid LEFT JOIN src.stp_md_parties op ON ae.productownerpartyid = op.partyid LEFT JOIN src.stp_md_parties ip ON ae.informationproviderpartyid = ip.partyid LEFT JOIN src.stp_tx_aggregation_certificates ac ON ac.aggregationeventid = ae.aggregationeventid LEFT JOIN src.stp_md_certificates c ON ac.certificateid = c.certificateid WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID GROUP BY ae.aggregationeventid, ae.eventnumber, ae.eventtimeutc, ae.locationid, ae.eventtype, ae.informationproviderpartyid, ae.productownerpartyid, op.partycode, op.partyname, op.addressline1, op.addressline2, op.city, op.stateprovince, op.country, ip.partyname, loc.locationcode, loc.locationname, loc.addressline1, loc.addressline2, loc.city, loc.stateprovince, loc.country, loc.registrationnumber ), all_products AS ( SELECT ae.aggregationeventid, 'Parent' AS product_type, lu.sscc AS lotNumber, NULL AS qty, NULL AS uom, COALESCE(pd.gtin, lu.sscc) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_aggregationevents ae JOIN src.stp_tx_aggregationlines al ON al.aggregationeventid = ae.aggregationeventid JOIN src.stp_tx_logisticunit lu ON lu.logisticunitid = al.parentlogisticunitid LEFT JOIN src.stp_tx_logisticunitlot ul ON ul.logisticunitid = lu.logisticunitid LEFT JOIN src.stp_tx_lots l ON l.lotid = ul.lotid LEFT JOIN src.stp_md_productdefinitions pd ON pd.productdefinitionid = l.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID UNION ALL SELECT ae.aggregationeventid, 'Child' AS product_type, COALESCE(l.lotcode, lu.sscc) AS lotNumber, al.quantity AS qty, COALESCE(u.code, ul.uomid::text) AS uom, COALESCE(pd.gtin, l.lotcode, lu.sscc) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_aggregationevents ae JOIN src.stp_tx_aggregationlines al ON al.aggregationeventid = ae.aggregationeventid LEFT JOIN src.stp_tx_logisticunit lu ON lu.logisticunitid = al.childlogisticunitid LEFT JOIN src.stp_tx_logisticunitlot ul ON ul.logisticunitid = lu.logisticunitid LEFT JOIN src.stp_tx_lots l ON l.lotid = COALESCE(al.childlotid, ul.lotid) LEFT JOIN src.stp_md_uom u ON u.uomid = COALESCE(al.uomid, ul.uomid) LEFT JOIN src.stp_md_productdefinitions pd ON pd.productdefinitionid = l.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID ) SELECT be.idEventRecord, be.eventnumber, be.eventTime, p.product_type, p.lotNumber, p.qty, p.uom, p.gtin, p.itemName, p.productForm, p.scientificname, p.speciesCode, be.infoProviderId, be.infoProviderName, be.ownerId, be.ownerCode, be.ownerName, be.ownerAddress1, be.ownerAddress2, be.ownerCity, be.ownerState, be.ownerCountry, be.locCode, be.locName, be.locAddress1, be.locAddress2, be.locCity, be.locState, be.locCountry, be.locRegistrationnumber, be.humanpolicyId, be.humanpolicyValue, be.humanpolicyStandard, be.humanpolicyAgency, be.harvestId, be.harvestValue, be.harvestStandard, be.harvestAgency, be.harvestcocId, be.harvestcocValue, be.harvestcocStandard, be.harvestcocAgency, be.eventtype FROM base_event be JOIN all_products p ON p.aggregationeventid = be.idEventRecord ORDER BY be.idEventRecord, p.product_type DESC, p.lotNumber LIMIT @limit OFFSET @offset;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstaggregationevent",
+            "EventTime": "$eventTime",
+            "HumanWelfarePolicy": "!3P Audit",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName",
+              "Address1": "$address1",
+              "Address2": "$address2",
+              "City": "$city",
+              "State": "$state",
+              "Country": "$country"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName",
+              "Address1": "$ownerAddress1",
+              "Address2": "$ownerAddress2",
+              "City": "$ownerCity",
+              "State": "$ownerState",
+              "Country": "$ownerCountry"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locRegistrationnumber",
+              "Name": "$locName",
+              "Address1": "$locAddress1",
+              "Address2": "$locAddress2",
+              "City": "$locCity",
+              "State": "$locState",
+              "Country": "$locCountry"
+            },
+
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "$product_type",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificname",
+                  "SpeciesCode": "$speciesCode"
+                }
+              }
+            ],
+            "Certificates": {
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanpolicyId",
+                "CertificationValue": "$humanpolicyValue",
+                "CertificationStandard": "$humanpolicyStandard",
+                "CertificationAgency": "$humanpolicyAgency"
+              },
+              "HarvestCertification": {
+                "Identifier": "$harvestId",
+                "CertificationValue": "$harvestValue",
+                "CertificationStandard": "$harvestStandard",
+                "CertificationAgency": "$harvestAgency"
+              },
+
+              "ChainOfCustodyCertification": {
+                "Identifier": "$harvestcocId",
+                "CertificationValue": "$harvestcocValue",
+                "CertificationStandard": "$harvestcocStandard",
+                "CertificationAgency": "$harvestcocAgency"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
       "Id": "GDST_SHIPPING",
       "EventType": "!gdstshippingevent",
       "Selectors": [
@@ -501,193 +687,8 @@
           }
         }
       ]
-    },
-    {
-      "Id": "GDST_PROCESSING_OUTPUTS",
-      "EventType": "!gdstprocessingevent",
-      "Selectors": [
-        {
-          "Id": "SEL_GDST_PROCESSING_OUTPUTS",
-          "Database": "SOURCE_DB",
-          "Count": "SELECT COUNT(*) FROM src.stp_tx_processingbatch b WHERE b.isactive = TRUE AND b.processingbatchid > @LastID",
-          "Selector": "WITH base_event AS ( SELECT b.processingbatchid AS idEventRecord, b.batchnumber, b.eventtimeutc AS eventTime, b.facilitylocationid, b.processingtypecode, b.informationproviderpartyid AS infoProviderId, b.productownerpartyid AS ownerId, op.partycode AS ownerCode, op.partyname AS ownerName, op.addressline1 AS ownerAddress1, op.addressline2 AS ownerAddress2, op.city AS ownerCity, op.stateprovince AS ownerState, op.country AS ownerCountry, ip.partyname AS infoProviderName, loc.locationcode AS locCode, loc.locationname AS locName, loc.addressline1 AS locAddress1, loc.addressline2 AS locAddress2, loc.city AS locCity, loc.stateprovince AS locState, loc.country AS locCountry, loc.registrationnumber AS locRegistrationnumber, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationidentification END) AS humanpolicyId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationvalue END) AS humanpolicyValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationstandard END) AS humanpolicyStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationagency END) AS humanpolicyAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationidentification END) AS harvestId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationvalue END) AS harvestValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationstandard END) AS harvestStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationagency END) AS harvestAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationidentification END) AS harvestcocId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationvalue END) AS harvestcocValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationstandard END) AS harvestcocStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationagency END) AS harvestcocAgency FROM src.stp_tx_processingbatch b LEFT JOIN src.stp_md_locations loc ON b.facilitylocationid = loc.locationid LEFT JOIN src.stp_md_parties op ON b.productownerpartyid = op.partyid LEFT JOIN src.stp_md_parties ip ON b.informationproviderpartyid = ip.partyid LEFT JOIN src.stp_tx_processingbatch_certificates pbc ON pbc.processingbatchid = b.processingbatchid LEFT JOIN src.stp_md_certificates c ON pbc.certificateid = c.certificateid WHERE b.isactive = TRUE AND b.processingbatchid > @LastID GROUP BY b.processingbatchid, b.batchnumber, b.eventtimeutc, b.facilitylocationid, b.processingtypecode, b.informationproviderpartyid, b.productownerpartyid, op.partycode, op.partyname, op.addressline1, op.addressline2, op.city, op.stateprovince, op.country, ip.partyname, loc.locationcode, loc.locationname, loc.addressline1, loc.addressline2, loc.city, loc.stateprovince, loc.country, loc.registrationnumber ), all_products AS ( SELECT b.processingbatchid, 'Input' AS product_type, l.lotcode AS lotNumber, pi.quantity AS qty, u.code AS uom, COALESCE(pd.gtin, l.lotcode) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_processingbatch b JOIN src.stp_tx_processinginput pi ON pi.processingbatchid = b.processingbatchid JOIN src.stp_tx_lots l ON pi.lotid = l.lotid LEFT JOIN src.stp_md_uom u ON pi.uomid = u.uomid LEFT JOIN src.stp_md_productdefinitions pd ON l.productdefinitionid = pd.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE b.isactive = TRUE AND b.processingbatchid > @LastID UNION ALL SELECT b.processingbatchid, 'Output' AS product_type, l.lotcode AS lotNumber, po.quantity AS qty, u.code AS uom, COALESCE(pd.gtin, l.lotcode) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_processingbatch b JOIN src.stp_tx_processingoutput po ON po.processingbatchid = b.processingbatchid JOIN src.stp_tx_lots l ON po.lotid = l.lotid LEFT JOIN src.stp_md_uom u ON po.uomid = u.uomid LEFT JOIN src.stp_md_productdefinitions pd ON l.productdefinitionid = pd.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE b.isactive = TRUE AND b.processingbatchid > @LastID ) SELECT be.idEventRecord, be.batchnumber, be.eventTime, p.product_type, p.lotNumber, p.qty, p.uom, p.gtin, p.itemName, p.productForm, p.scientificname, p.speciesCode, be.infoProviderId, be.infoProviderName, be.ownerId, be.ownerCode, be.ownerName, be.ownerAddress1, be.ownerAddress2, be.ownerCity, be.ownerState, be.ownerCountry, be.locCode, be.locName, be.locAddress1, be.locAddress2, be.locCity, be.locState, be.locCountry, be.locRegistrationnumber, be.humanpolicyId, be.humanpolicyValue, be.humanpolicyStandard, be.humanpolicyAgency, be.harvestId, be.harvestValue, be.harvestStandard, be.harvestAgency, be.harvestcocId, be.harvestcocValue, be.harvestcocStandard, be.harvestcocAgency, be.processingtypecode FROM base_event be JOIN all_products p ON p.processingbatchid = be.idEventRecord ORDER BY be.idEventRecord, p.product_type DESC, p.lotNumber LIMIT @limit OFFSET @offset;",
-          "Memory": {
-            "LastID": {
-              "DefaultValue": "0",
-              "Field": "$idEventRecord",
-              "DataType": "Int64"
-            }
-          },
-          "EventMapping": {
-            "EventId": "$idEventRecord",
-            "EventType": "!gdstprocessingevent",
-            "EventTime": "$eventTime",
-            "HumanWelfarePolicy": "$humanpolicyId",
-            "InformationProvider": {
-              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName",
-              "Address1": "$address1",
-              "Address2": "$address2",
-              "City": "$city",
-              "State": "$state",
-              "Country": "$country"
-            },
-            "ProductOwner": {
-              "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
-              "Name": "$ownerName",
-              "Address1": "$ownerAddress1",
-              "Address2": "$ownerAddress2",
-              "City": "$ownerCity",
-              "State": "$ownerState",
-              "Country": "$ownerCountry"
-            },
-            "Location": {
-              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
-              "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
-              "RegistrationNumber": "$locRegistrationnumber",
-              "Name": "$locName",
-              "Address1": "$locAddress1",
-              "Address2": "$locAddress2",
-              "City": "$locCity",
-              "State": "$locState",
-              "Country": "$locCountry"
-            },
-
-            "Products": [
-              {
-                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
-                "ProductType": "$product_type",
-                "LotNumber": "$lotNumber",
-                "Quantity": "$qty",
-                "UoM": "Dictionary($uom, UomToEpcis)",
-                "ProductDefinition": {
-                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
-                  "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
-                  "ShortDescription": "$itemName",
-                  "ProductForm": "$productForm",
-                  "ScientificName": "$scientificname",
-                  "SpeciesCode": "$speciesCode"
-                }
-              }
-            ],
-            "Certificates": {
-              "HumanPolicyCertificate": {
-                "Identifier": "$humanpolicyId",
-                "CertificationValue": "$humanpolicyValue",
-                "CertificationStandard": "$humanpolicyStandard",
-                "CertificationAgency": "$humanpolicyAgency"
-              },
-              "HarvestCertification": {
-                "Identifier": "$harvestId",
-                "CertificationValue": "$harvestValue",
-                "CertificationStandard": "$harvestStandard",
-                "CertificationAgency": "$harvestAgency"
-              },
-
-              "ChainOfCustodyCertification": {
-                "Identifier": "$harvestcocId",
-                "CertificationValue": "$harvestcocValue",
-                "CertificationStandard": "$harvestcocStandard",
-                "CertificationAgency": "$harvestcocAgency"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "Id": "GDST_AGGREGATION_ADD",
-      "EventType": "!gdstaggregationevent",
-      "Selectors": [
-        {
-          "Id": "SEL_GDST_AGGREGATION_ADD",
-          "Database": "SOURCE_DB",
-          "Count": "SELECT COUNT(*) FROM src.stp_tx_aggregationevents ae WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID",
-          "Selector": "WITH base_event AS ( SELECT ae.aggregationeventid as idEventRecord, ae.eventnumber, ae.eventtimeutc AS eventTime, ae.locationid, ae.eventtype, ae.informationproviderpartyid AS infoProviderId, ae.productownerpartyid AS ownerId, op.partycode AS ownerCode, op.partyname AS ownerName, op.addressline1 AS ownerAddress1, op.addressline2 AS ownerAddress2, op.city AS ownerCity, op.stateprovince AS ownerState, op.country AS ownerCountry, ip.partyname AS infoProviderName, loc.locationcode AS locCode, loc.locationname AS locName, loc.addressline1 AS locAddress1, loc.addressline2 AS locAddress2, loc.city AS locCity, loc.stateprovince AS locState, loc.country AS locCountry, loc.registrationnumber AS locRegistrationnumber, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationidentification END) AS humanpolicyId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationvalue END) AS humanpolicyValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationstandard END) AS humanpolicyStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:humanPolicy' THEN c.certificationagency END) AS humanpolicyAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationidentification END) AS harvestId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationvalue END) AS harvestValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationstandard END) AS harvestStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCert' THEN c.certificationagency END) AS harvestAgency, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationidentification END) AS harvestcocId, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationvalue END) AS harvestcocValue, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationstandard END) AS harvestcocStandard, MAX(CASE WHEN c.certificationtype = 'urn:gdst:certType:harvestCoC' THEN c.certificationagency END) AS harvestcocAgency FROM src.stp_tx_aggregationevents ae LEFT JOIN src.stp_md_locations loc ON ae.locationid = loc.locationid LEFT JOIN src.stp_md_parties op ON ae.productownerpartyid = op.partyid LEFT JOIN src.stp_md_parties ip ON ae.informationproviderpartyid = ip.partyid LEFT JOIN src.stp_tx_aggregation_certificates ac ON ac.aggregationeventid = ae.aggregationeventid LEFT JOIN src.stp_md_certificates c ON ac.certificateid = c.certificateid WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID GROUP BY ae.aggregationeventid, ae.eventnumber, ae.eventtimeutc, ae.locationid, ae.eventtype, ae.informationproviderpartyid, ae.productownerpartyid, op.partycode, op.partyname, op.addressline1, op.addressline2, op.city, op.stateprovince, op.country, ip.partyname, loc.locationcode, loc.locationname, loc.addressline1, loc.addressline2, loc.city, loc.stateprovince, loc.country, loc.registrationnumber ), all_products AS ( SELECT ae.aggregationeventid, 'Parent' AS product_type, lu.sscc AS lotNumber, NULL AS qty, NULL AS uom, COALESCE(pd.gtin, lu.sscc) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_aggregationevents ae JOIN src.stp_tx_aggregationlines al ON al.aggregationeventid = ae.aggregationeventid JOIN src.stp_tx_logisticunit lu ON lu.logisticunitid = al.parentlogisticunitid LEFT JOIN src.stp_tx_logisticunitlot ul ON ul.logisticunitid = lu.logisticunitid LEFT JOIN src.stp_tx_lots l ON l.lotid = ul.lotid LEFT JOIN src.stp_md_productdefinitions pd ON pd.productdefinitionid = l.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID UNION ALL SELECT ae.aggregationeventid, 'Child' AS product_type, COALESCE(l.lotcode, lu.sscc) AS lotNumber, al.quantity AS qty, COALESCE(u.code, ul.uomid::text) AS uom, COALESCE(pd.gtin, l.lotcode, lu.sscc) AS gtin, pd.shortdescription AS itemName, pf.productformname AS productForm, sp.scientificname, sp.species3alphacode AS speciesCode FROM src.stp_tx_aggregationevents ae JOIN src.stp_tx_aggregationlines al ON al.aggregationeventid = ae.aggregationeventid LEFT JOIN src.stp_tx_logisticunit lu ON lu.logisticunitid = al.childlogisticunitid LEFT JOIN src.stp_tx_logisticunitlot ul ON ul.logisticunitid = lu.logisticunitid LEFT JOIN src.stp_tx_lots l ON l.lotid = COALESCE(al.childlotid, ul.lotid) LEFT JOIN src.stp_md_uom u ON u.uomid = COALESCE(al.uomid, ul.uomid) LEFT JOIN src.stp_md_productdefinitions pd ON pd.productdefinitionid = l.productdefinitionid LEFT JOIN src.stp_md_productforms pf ON pd.productformid = pf.productformid LEFT JOIN src.stp_md_species sp ON pf.speciesid = sp.speciesid WHERE ae.isactive = TRUE AND ae.aggregationeventid > @LastID ) SELECT be.idEventRecord, be.eventnumber, be.eventTime, p.product_type, p.lotNumber, p.qty, p.uom, p.gtin, p.itemName, p.productForm, p.scientificname, p.speciesCode, be.infoProviderId, be.infoProviderName, be.ownerId, be.ownerCode, be.ownerName, be.ownerAddress1, be.ownerAddress2, be.ownerCity, be.ownerState, be.ownerCountry, be.locCode, be.locName, be.locAddress1, be.locAddress2, be.locCity, be.locState, be.locCountry, be.locRegistrationnumber, be.humanpolicyId, be.humanpolicyValue, be.humanpolicyStandard, be.humanpolicyAgency, be.harvestId, be.harvestValue, be.harvestStandard, be.harvestAgency, be.harvestcocId, be.harvestcocValue, be.harvestcocStandard, be.harvestcocAgency, be.eventtype FROM base_event be JOIN all_products p ON p.aggregationeventid = be.idEventRecord ORDER BY be.idEventRecord, p.product_type DESC, p.lotNumber LIMIT @limit OFFSET @offset;",
-          "Memory": {
-            "LastID": {
-              "DefaultValue": "0",
-              "Field": "$idEventRecord",
-              "DataType": "Int64"
-            }
-          },
-          "EventMapping": {
-            "EventId": "$idEventRecord",
-            "EventType": "!gdstaggregationevent",
-            "EventTime": "$eventTime",
-            "HumanWelfarePolicy": "!3P Audit",
-            "InformationProvider": {
-              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
-              "Name": "$infoProviderName",
-              "Address1": "$address1",
-              "Address2": "$address2",
-              "City": "$city",
-              "State": "$state",
-              "Country": "$country"
-            },
-            "ProductOwner": {
-              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-              "Name": "$ownerName",
-              "Address1": "$ownerAddress1",
-              "Address2": "$ownerAddress2",
-              "City": "$ownerCity",
-              "State": "$ownerState",
-              "Country": "$ownerCountry"
-            },
-            "Location": {
-              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
-              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-              "RegistrationNumber": "$locRegistrationnumber",
-              "Name": "$locName",
-              "Address1": "$locAddress1",
-              "Address2": "$locAddress2",
-              "City": "$locCity",
-              "State": "$locState",
-              "Country": "$locCountry"
-            },
-
-            "Products": [
-              {
-                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
-                "ProductType": "$product_type",
-                "LotNumber": "$lotNumber",
-                "Quantity": "$qty",
-                "UoM": "Dictionary($uom, UomToEpcis)",
-                "ProductDefinition": {
-                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
-                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
-                  "ShortDescription": "$itemName",
-                  "ProductForm": "$productForm",
-                  "ScientificName": "$scientificname",
-                  "SpeciesCode": "$speciesCode"
-                }
-              }
-            ],
-            "Certificates": {
-              "HumanPolicyCertificate": {
-                "Identifier": "$humanpolicyId",
-                "CertificationValue": "$humanpolicyValue",
-                "CertificationStandard": "$humanpolicyStandard",
-                "CertificationAgency": "$humanpolicyAgency"
-              },
-              "HarvestCertification": {
-                "Identifier": "$harvestId",
-                "CertificationValue": "$harvestValue",
-                "CertificationStandard": "$harvestStandard",
-                "CertificationAgency": "$harvestAgency"
-              },
-
-              "ChainOfCustodyCertification": {
-                "Identifier": "$harvestcocId",
-                "CertificationValue": "$harvestcocValue",
-                "CertificationStandard": "$harvestcocStandard",
-                "CertificationAgency": "$harvestcocAgency"
-              }
-            }
-          }
-        }
-      ]
     }
+
   ]
 
     }

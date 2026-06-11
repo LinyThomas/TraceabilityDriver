@@ -287,12 +287,12 @@ namespace TraceabilityDriver.Services
             // Add record time range filters
             if (options.query.GE_recordTime.HasValue)
             {
-                filter = filter & filterBuilder.Gte(e => e.RecordTime, options.query.GE_recordTime.Value);
+                filter = filter & filterBuilder.Gte(e => e.RecordTime, options.query.GE_recordTime.Value.UtcDateTime);
             }
 
             if (options.query.LE_recordTime.HasValue)
             {
-                filter = filter & filterBuilder.Lt(e => e.RecordTime, options.query.LE_recordTime.Value);
+                filter = filter & filterBuilder.Lt(e => e.RecordTime, options.query.LE_recordTime.Value.UtcDateTime);
             }
 
             // Add bizStep filters
