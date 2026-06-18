@@ -321,7 +321,7 @@
               "Country": "$country"
             },
             "ProductOwner": {
-              "OwnerId": "GenerateIdentifier(!P,,$ownerCode, $ownerId)",
+              "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
               "Name": "$ownerName",
               "Address1": "$ownerAddress1",
               "Address2": "$ownerAddress2",
@@ -331,7 +331,7 @@
             },
             "Location": {
               "LocationId": "GenerateIdentifier(!LOC, $shipFromCode)",
-              "OwnerId": "GenerateIdentifier(!P,,$ownerCode,$ownerId)",
+              "OwnerId": "GenerateIdentifier(!P,$ownerCode,$ownerId)",
               "RegistrationNumber": "$shipFromRegistrationNumber",
               "Name": "$shipFromName",
               "Address1": "$shipFromAddress1",
@@ -343,7 +343,7 @@
             "Source": {
               "Location": {
                 "LocationId": "GenerateIdentifier(!LOC, $shipFromCode)",
-                "OwnerId": "GenerateIdentifier(!P,,$ownerCode, $ownerId)",
+                "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
                 "RegistrationNumber": "$shipFromRegNumber",
                 "Name": "$shipFromName",
                 "Address1": "$shipFromAddress1",
@@ -356,7 +356,7 @@
             "Destination": {
               "Location": {
                 "LocationId": "GenerateIdentifier(!LOC, $shipToCode)",
-                "OwnerId": "GenerateIdentifier(!P,,$ownerCode, $ownerId)",
+                "OwnerId": "GenerateIdentifier(!P,$ownerCode, $ownerId)",
                 "RegistrationNumber": "$shipToRegNumber",
                 "Name": "$shipToName",
                 "Address1": "$shipToAddress1",
@@ -379,7 +379,7 @@
                 "UoM": "Dictionary($uom, UomToEpcis)",
                 "ProductDefinition": {
                   "ProductDefinitionId": "GenerateIdentifier(!IDOP, $gtin)",
-                  "OwnerId": "GenerateIdentifier(!IDOP,,$ownerCode, $ownerId)",
+                  "OwnerId": "GenerateIdentifier(!IDOP,$ownerCode, $ownerId)",
                   "ShortDescription": "$itemName",
                   "ProductForm": "$productForm",
                   "ScientificName": "$scientificName",
